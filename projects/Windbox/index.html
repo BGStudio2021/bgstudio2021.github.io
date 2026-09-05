@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Windbox</title>
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <link rel="stylesheet" href="windbox.css?ver=1">
+    <link rel="stylesheet" href="windbox-dark.css?ver=1">
+</head>
+
+<body>
+    <div class="shortcuts"></div>
+    <div class="drawer">
+        <div class="drawer-container">
+            <div class="drawer-title"></div>
+            <div class="drawer-content"></div>
+        </div>
+    </div>
+    <div class="drawer-overlay" onclick="drawer_toggle();"></div>
+    <div class="taskbar">
+        <div class="taskbar-btn taskbar-btn-opened start-menu-trigger" onclick="startMenu_toggle();">
+            <img src="favicon.png">
+        </div>
+        <div class="taskbar-btns"></div>
+        <div class="taskbar-date"></div>
+    </div>
+    <div class="start-menu">
+        <div class="start-menu-item"
+            onclick="startMenu_toggle();drawer_initialize(drawerTitle_About, drawerContent_About);">关于 Windbox
+        </div>
+        <div class="start-menu-item" onclick="startMenu_toggle();darkTheme_toggle();">切换深色主题</div>
+        <div class="start-menu-item"
+            onclick="startMenu_toggle();drawer_initialize(drawerTitle_Bg, drawerContent_Bg);">更改桌面背景</div>
+        <div class="start-menu-item"
+            onclick="startMenu_toggle();drawer_initialize(drawerTitle_CreateShortcut, drawerContent_CreateShortcut);">
+            创建快捷方式</div>
+        <div class="start-menu-item" onclick="startMenu_toggle();windbox_minimiseAll();">最小化所有窗口</div>
+        <div class="start-menu-item" onclick="startMenu_toggle();windbox_restoreAll();">还原所有窗口</div>
+        <div class="start-menu-item"
+            onclick="startMenu_toggle();drawer_initialize(drawerTitle_DestroyAll, drawerContent_DestroyAll);">
+            关闭所有窗口</div>
+        <div class="start-menu-item"
+            onclick="startMenu_toggle();drawer_initialize(drawerTitle_LeavePage, drawerContent_LeavePage);">关闭标签页
+        </div>
+    </div>
+    <div class="start-menu-overlay" onclick="startMenu_toggle();"></div>
+    <div class="float-layer"></div>
+    <div class="notification">
+        <div class="notification-title"></div>
+        <div class="notification-content"></div>
+    </div>
+    <script src="windbox.js?ver=1"></script>
+</body>
+
+</html>

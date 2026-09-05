@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Windows 11 加载动画</title>
+    <style>
+        @font-face {
+            font-family: "Win10Loading";
+            src: url("segoe_slboot-Win11.ttf") format("truetype");
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+        }
+
+        .spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: "Win10Loading";
+            font-size: 48px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="spinner"></div>
+    <script>
+        let frame = 0;
+        let spinner = document.querySelector(".spinner");
+        onload = function () {
+            let interval = setInterval(function () {
+                spinner.innerHTML = String.fromCharCode(0xe100 + frame);
+                frame = (frame + 1) % 119;
+            }, 30);
+        };
+    </script>
+</body>
+
+</html>

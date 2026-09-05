@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ListRoller</title>
+    <style>
+        html,
+        body {
+            background: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .roller {
+            position: relative;
+            width: 96px;
+            height: 96px;
+            background: #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .roller-item {
+            position: absolute;
+            width: 96px;
+            height: 96px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <h1 style="color: #fff;margin-top: 64px;">ListRoller</h1>
+        <div class="roller" style="margin-left: calc(50% - 48px);margin-top: 64px;">
+            <div class="roller-item" style="top: 0;"></div>
+            <div class="roller-item" style="top: 96px;"></div>
+        </div>
+        <div style="color: #fff;margin-top: 64px;">Made by Burger Studio.</div>
+    </div>
+    <script>
+        // 列表元素
+        const rollerList_0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        const rollerList_1 = "临安春雨初霁 宋·陆游 世味年来薄似纱，谁令骑马客京华。小楼一夜听春雨，深巷明朝卖杏花。矮纸斜行闲作草，晴窗细乳戏分茶。素衣莫起风尘叹，犹及清明可到家。 ";
+        rollerList = rollerList_1;
+        // 初始化滚动器
+        function initRoller(roller) {
+            const rollerItems = roller.querySelectorAll('.roller-item');
+            // 设置属性
+            roller.currentIndex = 1;
+            roller.currentPosition = [0, 96];
+            roller.velocity = 0;
+            roller.acceleration = 0.1;
+            roller.max_velocity = 5;
+            // 第一项填在中间
+            rollerItems.forEach((item, index) => {
+                item.innerText = rollerList[index];
+            });
+            // 开始执行动画
+            requestAnimationFrame(() => { runRoller(roller); }, 10);
+        }
+        // 启动滚动器
+        function runRoller(roller) {
+            const rollerItems = roller.querySelectorAll('.roller-item');
+            // 进行位移
+            rollerItems.forEach((item, index) => {
+                roller.currentPosition[index] -= roller.velocity;
+                // 速度调整
+                if (roller.velocity <= roller.max_velocity - roller.acceleration) {
+                    roller.velocity += roller.acceleration;
+                } else if (roller.velocity >= roller.max_velocity + roller.acceleration) {
+                    roller.velocity -= roller.acceleration;
+                }
+                // 循环机制
+                if (roller.currentPosition[index] <= -96) {
+                    roller.currentPosition[index] += 192;
+                    roller.currentIndex = (roller.currentIndex + 1) % rollerList.length;
+                    item.innerText = rollerList[roller.currentIndex];
+                }
+                item.style.top = `${roller.currentPosition[index]}px`;
+            });
+            // 下一轮动画
+            requestAnimationFrame(() => { runRoller(roller); }, 10);
+        }
+        // 鼠标移入时加速
+        document.querySelector('.roller').addEventListener('mouseover', () => { document.querySelector('.roller').max_velocity = 100; });
+        // 鼠标移出时减速
+        document.querySelector('.roller').addEventListener('mouseout', () => { document.querySelector('.roller').max_velocity = 5; });
+        initRoller(document.querySelector('.roller'));
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>奇怪の时钟</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #333;
+        }
+
+        .title {
+            text-align: center;
+            color: #fff;
+        }
+
+        .clock {
+            width: 256px;
+            height: 256px;
+            margin: 32px calc(50% - 128px);
+            border-radius: 50%;
+            outline: 2px solid rgba(255, 255, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.25);
+            position: relative;
+        }
+
+        .pointer {
+            position: absolute;
+            left: 128px;
+            top: 0;
+            border-radius: 128px;
+            transform: translateX(-50%);
+            background: #fff;
+        }
+
+        .pointer-h {
+            width: 6px;
+            margin-top: 40px;
+            height: 88px;
+            transform-origin: center bottom;
+            z-index: 1;
+        }
+
+        .pointer-m {
+            width: 4px;
+            margin-top: 20px;
+            height: 108px;
+            transform-origin: center bottom;
+            z-index: 2;
+        }
+
+        .pointer-s {
+            background: #90CAF9;
+            width: 2px;
+            margin-top: 16px;
+            height: 128px;
+            transform-origin: center calc(100% - 16px);
+            z-index: 3;
+        }
+
+        .mark-container {
+            position: absolute;
+            width: 0;
+            height: 128px;
+            left: 128px;
+            top: 0;
+            transform-origin: center bottom;
+        }
+
+        .mark-bold {
+            width: 0;
+            height: 12px;
+            outline: 1.5px solid #fff;
+        }
+
+        .mark-thin {
+            width: 0;
+            height: 8px;
+            outline: 1px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .pointer-root {
+            position: absolute;
+            left: 128px;
+            top: 128px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #90CAF9;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #fff;
+            color: #000;
+            margin: 8px;
+            padding: 10px 20px;
+            border-radius: 1024px;
+            font-size: 16px;
+            user-select: none;
+            transition: 0.2s;
+        }
+
+        .btn:hover {
+            background: #BBDEFB;
+            transition: 0.2s;
+        }
+
+        .btn:active {
+            background: #2196F3;
+            color: #fff;
+            transition: 0s;
+        }
+
+        @media (max-width: 768px) {
+            .inline-item {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;margin: 32px 0 48px 0;">
+        <div style="display: inline-block;width: 256px;margin-right: 5%;" class="inline-item">
+            <h1 class="title">标准时钟</h1>
+            <div class="clock clock-1">
+                <div class="pointer pointer-h"></div>
+                <div class="pointer pointer-m"></div>
+                <div class="pointer pointer-s"></div>
+                <div class="pointer-root"></div>
+            </div>
+        </div>
+        <div style="display: inline-block;width: 256px;margin-left: 5%;" class="inline-item">
+            <h1 class="title">奇怪の时钟</h1>
+            <div class="clock clock-2">
+                <div class="pointer pointer-h"></div>
+                <div class="pointer pointer-m"></div>
+                <div class="pointer pointer-s"></div>
+                <div class="pointer-root"></div>
+            </div>
+        </div>
+    </div>
+    <div style="text-align: center;">
+        <div class="btn btn-train" onclick="_runModel(true);">开始训练</div>
+        <div class="btn btn-run" onclick="_runModel(false);">开始运行</div>
+        <div class="btn" onclick="exportModel();">导出模型</div>
+        <div class="btn" onclick="importModel();">导入模型</div>
+        <br>
+        <p style="color: #fff;margin-top: 32px;" class="train-count">训练次数：0</p>
+        <p style="color: #fff;margin-top: 4px;" class="max-diff">最大偏差角：0</p>
+        <p style="color: #fff;margin-top: 4px;word-wrap: break-word;" class="current-diff"></p>
+    </div>
+    <script>
+        // 生成刻度
+        function genMark(clock) {
+            for (let i = 0; i < 60; i++) {
+                const markContainer = document.createElement('div');
+                markContainer.classList.add('mark-container');
+                markContainer.style.transform = `rotate(${i * 6}deg)`;
+                const mark = document.createElement('div');
+                mark.classList.add(i % 5 == 0 ? 'mark-bold' : 'mark-thin');
+                markContainer.appendChild(mark);
+                clock.appendChild(markContainer);
+            }
+        }
+        genMark(document.querySelector('.clock-1'));
+        genMark(document.querySelector('.clock-2'));
+        // 时钟
+        var currentAngle = {
+            clock1: {
+                h: 0,
+                m: 0,
+                s: 0
+            },
+            clock2: {
+                h: 0,
+                m: 0,
+                s: 0
+            }
+        }
+        function updateClock(clock) {
+            const now = new Date().getTime();
+            const hours = now / 1000 / 60 / 60 - 8; // 注意东 8 区
+            const minutes = now / 1000 / 60;
+            const seconds = now / 1000;
+
+            const hourAngle = (hours % 12) * 30 + minutes * 0.5;
+            const minuteAngle = minutes * 6;
+            const secondAngle = seconds * 6;
+
+            const hourPointer = clock.querySelector('.pointer-h');
+            const minutePointer = clock.querySelector('.pointer-m');
+            const secondPointer = clock.querySelector('.pointer-s');
+
+            hourPointer.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+            minutePointer.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+            secondPointer.style.transform = `translateX(-50%) rotate(${secondAngle}deg)`;
+
+            currentAngle.clock1.h = hourAngle;
+            currentAngle.clock1.m = minuteAngle;
+            currentAngle.clock1.s = secondAngle;
+        }
+        setInterval(function () {
+            updateClock(document.querySelector('.clock-1'));
+        }, 10);
+        // 训练
+        var trainCount = 0;
+        var trainInterval, runInterval;
+        var training = false;
+        var running = false;
+        const btnTrain = document.querySelector('.btn-train');
+        const btnRun = document.querySelector('.btn-run');
+        function _runModel(train = false) {
+            if (training) {
+                clearInterval(trainInterval);
+                training = false;
+                btnTrain.innerHTML = '开始训练';
+                if (train) return;
+            }
+            if (running) {
+                clearInterval(runInterval);
+                running = false;
+                btnRun.innerHTML = '开始运行';
+                if (!train) return;
+            }
+            if (train) {
+                training = true;
+                btnTrain.innerHTML = '停止训练';
+            } else {
+                running = true;
+                btnRun.innerHTML = '停止运行';
+            }
+            updateClock(document.querySelector('.clock-2'));
+            for (let key in currentAngle.clock1) {
+                currentAngle.clock2[key] = currentAngle.clock1[key];
+            }
+            if (train) {
+                trainInterval = setInterval(function () {
+                    trainModel();
+                }, 10);
+            } else {
+                runInterval = setInterval(function () {
+                    runModel();
+                }, 10);
+            }
+        }
+        var model = {
+            h: [0.001, -0.001],
+            m: [0.01, -0.01],
+            s: [0.1, -0.1]
+        }
+        var maxDiff = 0;
+        function trainModel() {
+            // 自动截止
+            if (trainCount >= 10000) {
+                _runModel(true);
+                return;
+            }
+            trainCount++;
+            document.querySelector('.train-count').innerHTML = `训练次数：${trainCount}`;
+            // 初角度差
+            var diff_1 = {
+                h: currentAngle.clock1.h - currentAngle.clock2.h,
+                m: currentAngle.clock1.m - currentAngle.clock2.m,
+                s: currentAngle.clock1.s - currentAngle.clock2.s,
+            };
+            // 随机调整角度
+            var randomAngle = {
+                h: model.h[Math.floor(Math.random() * model.h.length)],
+                m: model.m[Math.floor(Math.random() * model.m.length)],
+                s: model.s[Math.floor(Math.random() * model.s.length)]
+            };
+            if (false) { // 使用 true 启用精准模式（和标准时钟几乎一致）
+                currentAngle.clock2.h = currentAngle.clock2.h + randomAngle.h * Math.abs(diff_1.h);
+                currentAngle.clock2.m = currentAngle.clock2.m + randomAngle.m * Math.abs(diff_1.m);
+                currentAngle.clock2.s = currentAngle.clock2.s + randomAngle.s * Math.abs(diff_1.s);
+            } else {
+                currentAngle.clock2.h = currentAngle.clock2.h + randomAngle.h;
+                currentAngle.clock2.m = currentAngle.clock2.m + randomAngle.m;
+                currentAngle.clock2.s = currentAngle.clock2.s + randomAngle.s;
+            }
+            // 偏差过大时多倍调整（暂停使用）
+            /*
+            if (diff_1 > 10) {
+                if (Math.abs(currentAngle.clock1.s - (currentAngle.clock2.s + randomAngle * 5)) < Math.abs(diff_1)) {
+                    currentAngle.clock2.s = currentAngle.clock2.s + randomAngle * 5;
+                } else {
+                    currentAngle.clock2.s = currentAngle.clock2.s - randomAngle * 5;
+                }
+            }
+            */
+            // 末角度差
+            var diff_2 = {
+                h: currentAngle.clock1.h - currentAngle.clock2.h,
+                m: currentAngle.clock1.m - currentAngle.clock2.m,
+                s: currentAngle.clock1.s - currentAngle.clock2.s,
+            };
+            document.querySelector('.clock-2 .pointer-h').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.h}deg)`;
+            document.querySelector('.clock-2 .pointer-m').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.m}deg)`;
+            document.querySelector('.clock-2 .pointer-s').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.s}deg)`;
+            // 比较初末角度差，并调整模型
+            if (Math.abs(diff_2.h) < Math.abs(diff_1.h)) {
+                model.h.push(randomAngle.h);
+            } else {
+                model.h.push(-randomAngle.h);
+            }
+            if (Math.abs(diff_2.m) < Math.abs(diff_1.m)) {
+                model.m.push(randomAngle.m);
+            } else {
+                model.m.push(-randomAngle.m);
+            }
+            if (Math.abs(diff_2.s) < Math.abs(diff_1.s)) {
+                model.s.push(randomAngle.s);
+            } else {
+                model.s.push(-randomAngle.s);
+            }
+            // 记录最大偏差角（秒针）
+            maxDiff = Math.max(maxDiff, Math.abs(diff_2.s));
+            document.querySelector('.max-diff').innerHTML = `最大偏差角：${maxDiff.toFixed(2)}`;
+            // 输出当前偏差角（秒针）
+            document.querySelector('.current-diff').innerText = '■'.repeat(Math.floor(Math.abs(diff_2.s)) * 2 + 1);
+        }
+        // 普通运行
+        function runModel() {
+            // 随机调整角度
+            var randomAngle = {
+                h: model.h[Math.floor(Math.random() * model.h.length)],
+                m: model.m[Math.floor(Math.random() * model.m.length)],
+                s: model.s[Math.floor(Math.random() * model.s.length)]
+            };
+            currentAngle.clock2.h = currentAngle.clock2.h + randomAngle.h;
+            currentAngle.clock2.m = currentAngle.clock2.m + randomAngle.m;
+            currentAngle.clock2.s = currentAngle.clock2.s + randomAngle.s;
+            // 角度差
+            var diff = {
+                h: currentAngle.clock1.h - currentAngle.clock2.h,
+                m: currentAngle.clock1.m - currentAngle.clock2.m,
+                s: currentAngle.clock1.s - currentAngle.clock2.s,
+            };
+            document.querySelector('.clock-2 .pointer-h').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.h}deg)`;
+            document.querySelector('.clock-2 .pointer-m').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.m}deg)`;
+            document.querySelector('.clock-2 .pointer-s').style.transform = `translateX(-50%) rotate(${currentAngle.clock2.s}deg)`;
+            // 记录最大偏差角（秒针）
+            maxDiff = Math.max(maxDiff, Math.abs(diff.s));
+            document.querySelector('.max-diff').innerHTML = `最大偏差角：${maxDiff.toFixed(2)}`;
+            // 输出当前偏差角（秒针）
+            document.querySelector('.current-diff').innerText = '■'.repeat(Math.floor(Math.abs(diff.s)) * 2 + 1);
+        }
+        // 导出模型
+        function exportModel() {
+            const modelStr = JSON.stringify(model);
+            const downloadLink = document.createElement('a');
+            downloadLink.download = 'clock-model.json';
+            downloadLink.href = URL.createObjectURL(new Blob([modelStr], {
+                type: 'text/plain'
+            }));
+            downloadLink.click();
+        }
+        // 导入模型
+        function importModel() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function (e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.readAsText(file, 'UTF-8');
+                reader.onload = function (e) {
+                    const modelStr = e.target.result;
+                    model = JSON.parse(modelStr);
+                }
+            }
+            input.click();
+        }
+    </script>
+</body>
+
+</html>

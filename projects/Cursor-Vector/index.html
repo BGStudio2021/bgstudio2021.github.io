@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>鼠向</title>
+    <style>
+        html,
+        body {
+            cursor: none;
+            background: #333;
+        }
+
+        .cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 64px;
+            height: 64px;
+            pointer-events: none;
+            transition-property: transform;
+            transition-duration: 0.2s;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="./cursor.svg" class="cursor">
+    <script>
+        const cursor = document.querySelector('.cursor');
+        var _lastPos, _lastDeg, d;
+        var pause = 0;
+        var deg = 0;
+        document.addEventListener('mousemove', (event) => {
+            cursor.style.left = event.clientX - 32 + 'px';
+            cursor.style.top = event.clientY - 32 + 'px';
+            // pause 用来控制 deg 的更新频率，每 10 帧更新一次，防止指针跳动
+            if (pause == 10) {
+                pause = 0;
+            } else {
+                pause++;
+                return;
+            }
+            if (_lastPos) { // 避免首次触发时 _lastPos 为 undefined
+                // _deg 与 _lastDeg 仅用来计算旋转角度，deg 才是最终的旋转角度
+                var _deg = (Math.atan2(event.clientY - _lastPos.y, event.clientX - _lastPos.x) * 180 + 157.5) / Math.PI;
+                d = Math.sqrt((event.clientY - _lastPos.y) ** 2 + (event.clientX - _lastPos.x) ** 2);
+                var diff = _deg - _lastDeg;
+                // 处理溢出
+                if (diff > 180) {
+                    diff -= 360;
+                } else if (diff < -180) {
+                    diff += 360;
+                }
+                if (!Number.isNaN(diff)) { // 避免首次触发时 diff 为 NaN
+                    deg += diff;
+                }
+                cursor.style.transform = `rotate(${deg + 135}deg) scale(${Math.E ** (d / 200)})`; // 调整指针方向
+                _lastDeg = _deg;
+            }
+            _lastPos = { x: event.clientX, y: event.clientY };
+        });
+        var vibration = 0;
+        var vibration_scale;
+        document.addEventListener('mousedown', function (event) {
+            vibration_scale = 10 * Math.E ** (d / 200);
+            vibration = 1;
+        });
+        document.addEventListener('mouseup', function (event) {
+            vibration = 0;
+        });
+        setInterval(() => {
+            if (!_lastPos || !vibration) return;
+            vibration_scale += 0.05;
+            cursor.style.left = Math.random() * vibration_scale - vibration_scale / 2 - 32 + _lastPos.x + 'px';
+            cursor.style.top = Math.random() * vibration_scale - vibration_scale / 2 - 32 + _lastPos.y + 'px';
+        }, 0);
+    </script>
+</body>
+
+</html>

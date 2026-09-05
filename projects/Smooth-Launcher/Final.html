@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>2</title>
+    <style>
+        :root {
+            --easeInQuint: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+            --easeInExpo: cubic-bezier(0.950, 0.050, 0.795, 0.035);
+            --easeInCirc: cubic-bezier(0.600, 0.040, 0.980, 0.335);
+            --easeInBack: cubic-bezier(0.600, -0.280, 0.735, 0.045);
+            --easeOutQuint: cubic-bezier(0.230, 1.000, 0.320, 1.000);
+            --easeOutExpo: cubic-bezier(0.190, 1.000, 0.220, 1.000);
+            --easeOutCirc: cubic-bezier(0.075, 0.820, 0.165, 1.000);
+            --easeOutBack: cubic-bezier(0.175, 0.885, 0.320, 1.275);
+            --easeInOutQuint: cubic-bezier(0.860, 0.000, 0.070, 1.000);
+            --easeInOutExpo: cubic-bezier(1.000, 0.000, 0.000, 1.000);
+            --easeInOutCirc: cubic-bezier(0.785, 0.135, 0.150, 0.860);
+            --easeInOutBack: cubic-bezier(0.680, -0.550, 0.265, 1.550);
+        }
+
+        html,
+        body {
+            background: #333;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            margin: 8px;
+            border: none;
+            outline: none;
+            border-radius: 8px;
+            transition: 0.1s;
+        }
+
+        .btn:hover {
+            background: #ccc;
+        }
+
+        .btn:active {
+            background: #999;
+        }
+
+        .app-overlay {
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(16px);
+            transition: 0.5s var(--easeOutQuint);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .app-overlay-open {
+            pointer-events: all;
+            opacity: 1;
+        }
+
+        .app {
+            position: fixed;
+            z-index: 101;
+            width: 70%;
+            height: 70%;
+            left: 15%;
+            top: 15%;
+            background: #fff;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .app-open {
+            pointer-events: all;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-overlay"></div>
+    <!-- 1 - 必应壁纸 -->
+    <button class="btn" id="btn1" onclick="app1.launch()">打开必应壁纸</button>
+    <div class="app" id="app1">
+        <img src="img1.jpg" style="width: 80%;">
+    </div>
+    <!-- 2 - 必应 -->
+    <button class="btn" id="btn2" onclick="app2.launch()">打不开必应</button>
+    <div class="app" id="app2">
+        <iframe src="https://cn.bing.com/" style="border: none;outline: none;width: 100%;height: 100%;"></iframe>
+    </div>
+    <!-- 3 - MDUI -->
+    <button class="btn" id="btn3" onclick="app3.launch()">打开 MDUI</button>
+    <div class="app" id="app3">
+        <iframe src="https://mdui.org/" style="border: none;outline: none;width: 100%;height: 100%;"></iframe>
+    </div>
+    <!-- 4 - MDUI -->
+    <button class="btn" id="btn4" onclick="app4.launch()">打开 v86</button>
+    <div class="app" id="app4">
+        <iframe src="https://copy.sh/v86/" style="border: none;outline: none;width: 100%;height: 100%;"></iframe>
+    </div>
+    <script>
+        // 获取元素
+        const appOverlay = document.querySelector('.app-overlay');
+        // 定义应用类
+        class App {
+            constructor(ele1, ele2) {
+                this.ele1 = ele1;
+                this.ele2 = ele2;
+                // 克隆元素
+                this.ele1_clone = ele1.cloneNode(true);
+                // 获取尺寸和位置
+                this.bcr1 = ele1.getBoundingClientRect();
+                this.bcr2 = ele2.getBoundingClientRect();
+                const { bcr1, bcr2 } = this
+                this.center1 = { x: bcr1.left + bcr1.width / 2, y: bcr1.top + bcr1.height / 2 };
+                this.center2 = { x: bcr2.left + bcr2.width / 2, y: bcr2.top + bcr2.height / 2 };
+            }
+            // 启动
+            launch() {
+                const { ele1, ele2, ele1_clone, bcr1, bcr2, center1, center2 } = this;
+                // 隐藏初始元素
+                ele1.style.visibility = 'hidden';
+                // 显示克隆元素
+                document.body.appendChild(ele1_clone);
+                ele1_clone.style.pointerEvents = 'none';
+                ele1_clone.style.position = 'fixed';
+                ele1_clone.style.zIndex = 102;
+                ele1_clone.style.margin = '0';
+                ele1_clone.style.left = bcr1.left + 'px';
+                ele1_clone.style.top = bcr1.top + 'px';
+                ele1_clone.style.width = bcr1.width + 'px';
+                ele1_clone.style.height = bcr1.height + 'px';
+                // 显示末态元素
+                ele2.style.transform = `translate(${center1.x - center2.x}px, ${center1.y - center2.y}px) scale(${bcr1.width / bcr2.width}, ${bcr1.height / bcr2.height})`;
+                setTimeout(() => {
+                    ele2.style.transition = '0.5s var(--easeOutQuint)'
+                    ele1_clone.style.transition = '0.5s var(--easeOutQuint)'
+                    appOverlay.classList.add('app-overlay-open');
+                    ele2.classList.add('app-open');
+                    appOverlay.onclick = () => this.exit();
+                    ele2.style.transform = '';
+                    ele1_clone.style.transform = `translate(${center2.x - center1.x}px, ${center2.y - center1.y}px) scale(${bcr2.width / bcr1.width}, ${bcr2.height / bcr1.height})`;
+                    ele1_clone.style.opacity = 0;
+                }, 100);
+            }
+            // 退出
+            exit() {
+                const { ele1, ele2, ele1_clone, bcr1, bcr2, center1, center2 } = this;
+                appOverlay.classList.remove('app-overlay-open');
+                ele2.classList.remove('app-open');
+                ele2.style.transform = `translate(${center1.x - center2.x}px, ${center1.y - center2.y}px) scale(${bcr1.width / bcr2.width}, ${bcr1.height / bcr2.height})`;
+                ele1_clone.style.transform = '';
+                ele1_clone.style.opacity = 1;
+                setTimeout(() => {
+                    ele1.style.visibility = '';
+                    setTimeout(() => {
+                        document.body.removeChild(ele1_clone);
+                    }, 100);
+                }, 500);
+            }
+        }
+        // 注册应用
+        const app1 = new App(document.querySelector('#btn1'), document.querySelector('#app1'));
+        const app2 = new App(document.querySelector('#btn2'), document.querySelector('#app2'));
+        const app3 = new App(document.querySelector('#btn3'), document.querySelector('#app3'));
+        const app4 = new App(document.querySelector('#btn4'), document.querySelector('#app4'));
+    </script>
+</body>
+
+</html>

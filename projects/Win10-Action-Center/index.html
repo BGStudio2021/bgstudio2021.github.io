@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win10 操作中心</title>
+    <style>
+        html,
+        body {
+            background: #222;
+            margin: 0;
+            padding: 0;
+        }
+
+        .action-center {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            padding: 1.5px;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: auto auto auto auto;
+            grid-template-rows: auto auto auto;
+            grid-gap: 7.5px;
+            width: 500px;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        .action-center-item {
+            background: #393939;
+            outline: 1.5px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .action-center-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            outline: 1.5px solid rgba(255, 255, 255, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .action-center-item:active {
+            outline: none;
+            transform: scale(0.95);
+            transition: 0s;
+        }
+
+        .ball {
+            position: absolute;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            filter: blur(32px);
+            z-index: -1;
+            transition-property: transform, opacity;
+        }
+
+        .ball-upper {
+            width: 64px;
+            height: 64px;
+            opacity: 0;
+            filter: blur(12px);
+            background: rgba(255, 255, 255, 0.1);
+            transition-duration: 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="action-center">
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="action-center-item"></div>
+        <div class="ball ball-lower"></div>
+        <div class="ball ball-upper"></div>
+    </div>
+    <script>
+        var ballLower = document.querySelector('.ball-lower');
+        var ballUpper = document.querySelector('.ball-upper');
+        window.addEventListener('mousemove', function (e) {
+            ballLower.style.left = e.clientX - 64 - (window.innerWidth - 500) / 2 + 'px';
+            ballLower.style.top = e.clientY - 64 - (window.innerHeight - 300) / 2 + 'px';
+            ballUpper.style.left = e.clientX - 32 - (window.innerWidth - 500) / 2 + 'px';
+            ballUpper.style.top = e.clientY - 32 - (window.innerHeight - 300) / 2 + 'px';
+        });
+        window.addEventListener('mousedown', function (e) {
+            if (!e.target.closest('.action-center-item')) return;
+            ballUpper.style.opacity = '1';
+        });
+        window.addEventListener('mouseup', function (e) {
+            if (!e.target.closest('.action-center-item')) return;
+            ballUpper.style.transform = 'scale(5)';
+            setTimeout(() => {
+                ballUpper.style.opacity = '0';
+                setTimeout(() => {
+                    ballUpper.style.transform = 'scale(1)';
+                }, 300);
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

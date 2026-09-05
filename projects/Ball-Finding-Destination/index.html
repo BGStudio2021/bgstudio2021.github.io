@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>小球寻找终点</title>
+    <style>
+        html,
+        body {
+            background: #333;
+            color: #fff;
+            padding: 0;
+            margin: 0;
+        }
+
+        .ball-1,
+        .ball-2 {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            position: fixed;
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ball-2" style="background: #448aff;left: 512px;top: 512px;"></div>
+    <script>
+        var x = Array(100).fill(0);
+        var y = Array(100).fill(0);
+        var balls = [];
+        var x1 = 512, y1 = 512;
+        var model = Array(100).fill([1, 2, 3, 4]);
+        function diff(i) {
+            return (x[i] - x1) ** 2 + (y[i] - y1) ** 2;
+        }
+        onload = function () {
+            for (let i = 0; i < 100; i++) {
+                var ball = document.createElement('div');
+                ball.classList.add('ball-1');
+                balls.push(ball);
+                document.body.appendChild(ball);
+            }
+            setInterval(() => {
+                for (let i = 0; i < balls.length; i++) {
+                    var diff0 = diff(i);
+                    var random = model[i][Math.floor(Math.random() * model[i].length)];
+                    switch (random) {
+                        case 1:
+                            x[i] += 1;
+                            var diff1 = diff(i);
+                            if (diff1 < diff0) {
+                                model[i].push(random);
+                            } else {
+                                model[i].push(2);
+                                model[i].splice(model[i].indexOf(random), 1);
+                            }
+                            break;
+                        case 2:
+                            x[i] -= 1;
+                            var diff1 = diff(i);
+                            if (diff1 < diff0) {
+                                model[i].push(random);
+                            } else {
+                                model[i].push(1);
+                                model[i].splice(model[i].indexOf(random), 1);
+                            }
+                            break;
+                        case 3:
+                            y[i] += 1;
+                            var diff1 = diff(i);
+                            if (diff1 < diff0) {
+                                model[i].push(random);
+                            } else {
+                                model[i].push(4);
+                                model[i].splice(model[i].indexOf(random), 1);
+                            }
+                            break;
+                        case 4:
+                            y[i] -= 1;
+                            var diff1 = diff(i);
+                            if (diff1 < diff0) {
+                                model[i].push(random);
+                            } else {
+                                model[i].push(3);
+                                model[i].splice(model[i].indexOf(random), 1);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    balls[i].style.left = x[i] + 'px';
+                    balls[i].style.top = y[i] + 'px';
+                }
+            }, 10);
+        }
+    </script>
+</body>
+
+</html>

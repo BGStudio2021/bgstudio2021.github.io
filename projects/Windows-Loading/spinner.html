@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Windows 8 ~ 10 加载效果（圆形）</title>
+    <style>
+        html {
+            background: #0178D4;
+        }
+
+        .spinner {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            left: calc(50% - 50px);
+            top: calc(50% - 50px);
+        }
+
+        .spinner-dot {
+            position: absolute;
+            width: 100px;
+            height: 10px;
+            left: 0;
+            top: calc(50% - 5px);
+            animation-name: spin;
+            animation-duration: 3.9s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            transform: rotate(-90deg);
+            visibility: hidden;
+        }
+
+        @keyframes spin {
+            0% {
+                visibility: visible;
+            }
+
+            5.625% {
+                visibility: visible;
+                transform: rotate(0);
+            }
+
+            33.75% {
+                visibility: visible;
+                transform: rotate(180deg);
+            }
+
+            41.25% {
+                visibility: visible;
+                transform: rotate(360deg);
+            }
+
+            71.25% {
+                visibility: visible;
+                transform: rotate(540deg);
+            }
+
+            75% {
+                visibility: hidden;
+                transform: rotate(630deg);
+            }
+
+            100% {
+                visibility: hidden;
+                transform: rotate(630deg);
+            }
+        }
+
+        .spinner-dot::after {
+            content: "";
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: 0;
+            left: 0;
+            background: #fff;
+            border-radius: 10px;
+        }
+
+        .text {
+            position: fixed;
+            width: 100%;
+            text-align: center;
+            left: 0;
+            top: calc(50% + 70px);
+            font-size: 26px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="spinner"></div>
+    <div class="text">请稍等...</div>
+    <script>
+        window.onload = function () {
+            document.querySelectorAll(".spinner").forEach(function (item) {
+                for (var i = 0; i < 5; i++) {
+                    item.innerHTML += `<div class="spinner-dot" style="animation-delay: ` + 0.14 * i + `s;"></div>`;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

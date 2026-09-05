@@ -279,7 +279,7 @@
         "title_zh": "生草语言模型",
         "title_en": "BurgerAI",
         "date": "2024-06-25",
-        "description": "随机生成毫无逻辑的文章。\n包含中文模型和英语模型，使用前需要用文章进行训练。支持导出/导入数据。\n原理：训练时获取每两个字（中文模型）或词（英文模型）之间的联系，生成时根据这个数据输出，与输入法的预测功能相似。\n（更像是一个坏掉的 AI。）",
+        "description": "随机生成毫无逻辑的文章。\n分为普通模型（包含中文模型和英语模型）、中文双字模型和中文三字模型，后两者生成时的语言连贯性稍强一些（然而还是没什么逻辑）。\n使用前需要用文章进行训练。支持导出/导入数据。\n原理：训练时获取每两个或多个字（中文模型）或词（英文模型）之间的联系，生成时根据这个数据输出，与输入法的预测功能相似。\n（更像是一个坏掉的 AI。）",
         "icon": "favicon.png"
     },
     {
@@ -295,5 +295,132 @@
         "date": "2024-08-10",
         "description": "reCAPTCHA 图片验证器二创工具。\n可以修改 reCAPTCHA 的提示文本和图片，支持用鼠标拖入图片。\n（灵感来源于 QQ 群友的 reCAPTCHA 二创表情包。）",
         "icon": "favicon.png"
+    },
+    {
+        "title_zh": "仿 Win 加载动画",
+        "title_en": "Windows-Loading",
+        "date": "2024-10-27",
+        "description": "仿 Windows 小球加载动画，包括线性和圆形两种。\n利用 CSS 动画实现，和原版有些差别。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "Windbox",
+        "title_en": "Windbox",
+        "date": "2025-01-01",
+        "description": "一个基于 Web 前端的简易桌面环境，以 iframe 的形式将网页呈现在窗口中，实现类似 Windows 的使用体验。\n整体采用亚克力视觉风格，支持 7 种窗口贴靠方式（最大化、左、右、四角），可以通过创建快捷方式来嵌入其他网页（但由于浏览器跨域限制以及第三方站点的限制，很多网站无法正常显示）。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "小磁针",
+        "title_en": "Magnetic-Needle",
+        "date": "2025-05-13",
+        "description": "一个无聊透顶的作品。\n页面里有各种各样的小球，会跟随鼠标光标的移动和点击发生变化。\n",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "点名板",
+        "title_en": "RollCallBoard",
+        "date": "2025-05-17",
+        "description": "班级抽卡大师（bushi）。\n这是一个课堂随机点名工具，使用了较为丰富的动画效果。\n已被抽取过的同学默认不会再被抽取，但也可以重置已抽取名单。\n在页面右下角可开关背景音乐。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "Win10 操作中心",
+        "title_en": "Win10-Action-Center",
+        "date": "2025-08-05",
+        "description": "模仿 Win10 操作中心的块状按钮、涟漪扩散和边缘高光效果。\n做着玩的小作品，非常简陋。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "奇怪的时钟",
+        "title_en": "Odd-Clock",
+        "date": "2025-08-11",
+        "description": "一个突发奇想且意义不明的作品（）\n第一个时钟为标准时钟，第二个为奇怪的时钟。第二个时钟是个“新手”，它原本不知道如何工作，因此不断学习标准时钟的工作方式，让自己“看起来像个时钟”。\n然而无论训练多长时间，最终运行时总会出现偏差越来越大的情况。\n（和我之前做的“生草语言模型”有异曲同工之妙。）",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "鼠向",
+        "title_en": "Cursor-Vector",
+        "date": "2025-08-11",
+        "description": "无聊作品数量 += 1\n鼠标指针总是朝向左上方，这样未免有些单调，不如让它实时朝向你正在移动的方向（bushi）\n另外，鼠标指针的大小还会根据移动速度变化。\n（没错，这时我换了新 Logo。）",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "简易异或加密",
+        "title_en": "XOR-Encryption",
+        "date": "2025-08-13",
+        "description": "一个利用异或运算实现的简易加密工具。\n当时从信息技术课的例题中获取了一些灵感，于是做了一个类似的小工具。\n原理：将密钥文本和要加密的文件数据均转换为二进制，然后进行异或运算，加密和解密都是如此。为了避免页面卡顿，我使用了 Web Worker 进行处理。\n当然，由于实现思路较为简单，其安全性和目前主流的加密技术还是没法比的。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "Desmusic",
+        "title_en": "Desmusic",
+        "date": "2025-09-12",
+        "description": "将简谱快速制作成可在 Desmos 上播放的蜂鸣音乐。\n页面中有详细的操作说明和示例作品。空白模板提供了多种音色，也可微调音高、速度等。\n作者并没有学过乐理知识，只是制作此作品时临时了解，有描述不专业的地方，请谅解。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "ListRoller",
+        "title_en": "ListRoller",
+        "date": "2025-10-18",
+        "description": "一个纵向的简易滚动字幕。\n将鼠标悬停在字幕区域上方可以加速。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "奇怪的播放器",
+        "title_en": "OddPlayer",
+        "date": "2026-02-14",
+        "description": "用各种奇怪的效果查看图片、音频或视频。\n那段时间接触了 SVG 滤镜，于是用它写了一些怪异的特效。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "字符画播放器",
+        "title_en": "ASCII-Player",
+        "date": "2026-02-19",
+        "description": "能播放《Bad Apple!!》的字符画播放器。\n“ASCII-Player-Direct”能将图片/视频/相机画面转换为彩色字符画（使用的 emoji 字符颜色较少，画面色彩可能有点怪），可调整压缩程度和字体大小，\n“ASCII-Player-Direct-BW”是其黑白版本。\n“Bad Apple!! Player - Char”可以让你用任意两个字符（甚至是自定义 HTML 元素）搭配播放《Bad Apple!!》，\n“Bad Apple!! Player - Style”则使用同一种字符的不同样式（CSS）来播放。\n“Recorder”是我当时录制用的临时工具。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "小球寻找终点",
+        "title_en": "Ball-Finding-Destination",
+        "date": "2026-03-08",
+        "description": "没什么用处的作品。\n100 个小球（白色）使用一种极其简单的学习算法来寻找终点（蓝色）。\n最终它们大概率会在终点附近缓慢摆动。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "FileOnCanvas",
+        "title_en": "FileOnCanvas",
+        "date": "2026-03-15",
+        "description": "把任何文件转换成一组像噪声一样的图像。\n当时在B站看到类似的视频，于是自己也做了一个。\n选择一个文件（也支持拖拽或粘贴导入）即可开始转换。\n支持通过空格键控制播放与暂停，方向键翻页，也可以将某一帧画面保存到本地。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "TUI Simulator",
+        "title_en": "TUI-Simulator",
+        "date": "2026-03-18",
+        "description": "1:1 复刻旧版 Windows Boot Manager 交互界面，包括系统选择界面、高级启动选项、内存检测工具等。\n原理：用 2000 个元素组成一块 80x25 的网格状屏幕，每个元素只显示一个字符，设计一套渲染机制进行显示，\n千万不要按 Esc，不然你也不知道会发生什么（）\n（本来想把 edit.com 也做出来的，因为工作量太大放弃了。）",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "Win 加载动画（字体）",
+        "title_en": "Win-Boot-Font",
+        "date": "2026-04-17",
+        "description": "与之前的“仿 Win 加载动画”不同，这次我把 Windows 10 和 Windows 11 系统中包含该动画的字体提取了出来，并在网页中直接使用，能做到和原版几乎一致的效果。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "平滑打开动画",
+        "title_en": "Smooth-Launcher",
+        "date": "2026-07-12",
+        "description": "和我多年前的作品“启动器”有类似之处，但采用完全不同的实现方式。\n这次我使用“getBoundingClientRect”函数获取元素位置和大小信息，做到从按钮到对话框内容的无缝过渡。",
+        "icon": "favicon.png"
+    },
+    {
+        "title_zh": "拾音栈",
+        "title_en": "RhythmInn",
+        "date": "2026-08-26",
+        "description": "类 Metro 风格音乐收藏站。\n与之前的“云音乐歌单集”不同，这个作品主要用来分享我的纯音歌单，按照创作者分类整理曲目，且对桌面端屏幕尺寸有专门优化。\n预计这个项目将跟随我的歌单长期更新。\n（这是我第一次利用 Vue.js 开发实践项目。）\n（注意，VIP 曲目无法播放。）",
+        "icon": "favicon.ico",
+        "isRounded": true
     }
 ]

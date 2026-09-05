@@ -115,7 +115,7 @@
                 </div>
                 <br>
                 <mdui-button full-width icon="download"
-                    onclick="openPage('https://www.123pan.com/s/eSpzVv-vrBU3');">下载我的作品</mdui-button>
+                    onclick="openPage('https://4000332686.share.123pan.cn/123pan/6pjUMh-Omun');">下载我的作品</mdui-button>
                 <br>
                 <mdui-card style="width: 100%;">
                     <mdui-list id="project_list">
@@ -205,10 +205,7 @@
             if (isNewTab) {
                 window.open(URL);
             } else {
-                document.querySelector("#body_content").style.opacity = 0;
-                window.setTimeout(function () {
-                    location.href = URL;
-                }, 300);
+                location.href = URL;
             }
         }
         // 切换主题

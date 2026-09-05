@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>欢迎 - Windbox</title>
+    <style>
+        * {
+            font-family: 'Arial', sans-serif;
+        }
+
+        .text-accent {
+            color: #1E88E5;
+            transition: 0.1s;
+        }
+
+        .btn {
+            padding: 8px 32px;
+            margin-bottom: 12px;
+            background: rgba(240, 240, 240, 0.7);
+            box-shadow: 0 0.5px 2px 0.5px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.1s;
+        }
+
+        .btn:hover {
+            background: rgba(248, 248, 248, 0.7);
+        }
+
+        .btn:active,
+        .btn-touched {
+            background: rgba(224, 224, 224, 0.7);
+        }
+
+        .btn-accent {
+            background: #1565C0;
+            color: #fff;
+        }
+
+        .btn-accent:hover {
+            background: #1976D2;
+        }
+
+        .btn-accent:active,
+        .btn-accent-touched {
+            background: #0D47A1;
+        }
+
+        .body-dark .text-accent {
+            color: #42A5F5;
+        }
+
+        .body-dark .content {
+            color: #fff;
+        }
+
+        .body-dark .btn {
+            background: rgba(240, 240, 240, 0.15);
+            color: #fff;
+        }
+
+        .body-dark .btn:hover {
+            background: rgba(240, 240, 240, 0.2);
+        }
+
+        .body-dark .btn:active,
+        .body-dark .btn-touched {
+            background: rgba(240, 240, 240, 0.1) !important;
+        }
+
+        .body-dark .btn-accent {
+            background: #4CC2FF;
+            color: #000;
+            outline: none;
+        }
+
+        .body-dark .btn-accent:hover {
+            background: #49B3EA;
+        }
+
+        .body-dark .btn-accent:active,
+        .body-dark .btn-accent-touched {
+            background: #46A5D6 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="text-accent" style="padding: 96px 0 48px 0;text-align: center;font-size: 48px;">欢迎 - Windbox</div>
+    <div class="content" style="text-align: center;font-size: 22px;margin: 0 32px 48px 32px;transition: 0.1s;">Windbox
+        是由 Burger Studio
+        开发的、基于 Web 前端的桌面环境，目前正处于完善阶段。<br>你可以在开始菜单中创建快捷方式，或者开发自己的应用程序。</div>
+    <div style="width: 300px;margin-left: calc(50% - 150px);">
+        <button class="btn btn-accent"
+            onclick="parent.drawer_initialize(parent.drawerTitle_About, parent.drawerContent_About, 0);">了解更多</button>
+        <button class="btn" style="float: right;" onclick="closeWindow();">关闭窗口</button>
+    </div>
+    <script>
+        var windbox_ID;
+        parent.windboxes.forEach(function (ID) {
+            if (parent.document.querySelector("#iframe_" + ID).contentWindow == window) {
+                windbox_ID = ID;
+            }
+        });
+        window.setTimeout(function () {
+            parent.document.querySelector("#iframe_" + windbox_ID).style.backdropFilter = "blur(16px)";
+            window.setInterval(function () {
+                if (parent.document.body.classList.contains("body-dark")) {
+                    document.body.classList.add("body-dark");
+                    parent.document.querySelector("#iframe_" + windbox_ID).style.backgroundColor = "rgba(48, 48, 48, 0.7)";
+                } else {
+                    document.body.classList.remove("body-dark");
+                    parent.document.querySelector("#iframe_" + windbox_ID).style.backgroundColor = "rgba(224, 224, 224, 0.7)";
+                }
+            }, 500);
+        }, 750);
+        function closeWindow() {
+            parent.windbox_destroy(windbox_ID);
+        }
+        function touchOptimise() {
+            var touchElements = ["btn", "btn-accent"];
+            var touchDelay = [100, 100];
+            touchElements.forEach(function (item, delayIndex) {
+                document.querySelectorAll("." + item).forEach(function (itemObj) {
+                    itemObj.ontouchstart = function () {
+                        itemObj.classList.add(item + "-touched");
+                    }
+                    itemObj.ontouchend = function () {
+                        window.setTimeout(function () {
+                            itemObj.classList.remove(item + "-touched");
+                        }, touchDelay[delayIndex]);
+                    }
+                });
+            });
+        }
+        touchOptimise();
+    </script>
+</body>
+
+</html>

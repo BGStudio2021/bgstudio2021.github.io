@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CanvasInChaos</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #333;
+            color: #fff;
+        }
+
+        button {
+            border: none;
+            outline: 2px solid transparent;
+            padding: 12px 32px;
+            border-radius: 1024px;
+            background: #fff;
+            color: #333;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #ccc;
+            transition: 0.2s;
+        }
+
+        button:active {
+            background: #666;
+            color: #fff;
+            outline: 2px solid #fff;
+            transition: 0s;
+        }
+
+        input:not([type="range"]) {
+            padding: 8px;
+            background: #ccc;
+            border: none;
+            outline: 2px solid transparent;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <h1 style="margin: 32px 0 16px 0;">CanvasInChaos</h1>
+        <div style="margin-bottom: 16px;">
+            <button onclick="selectFile();" style="margin: 8px 16px;">选择文件</button>
+            <button onclick="toggleFullScreen();" style="margin: 8px 16px;">切换全屏</button>
+        </div>
+        <video id="video" controls style="max-width: 20%;max-height: 20%;"></video>
+        <br>
+        <canvas id="canvas" style="background: #000;max-width: 50%;max-height: 50%;margin-top: 32px;"></canvas>
+        <p style="text-align: center;margin: 32px 0;">Made by Burger Studio.</p>
+    </div>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const video = document.getElementById("video");
+        function selectFile() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "video/*";
+            input.onchange = function () {
+                const file = this.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    video.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+        video.addEventListener("canplaythrough", function () {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvasSize = canvas.width * canvas.height;
+        });
+        let canvasSize = 0;
+        let dynamicOffset = 0;
+        // 视频实时渲染到 Canvas
+        let uniOffset = Math.floor(Math.random() * 10) * 4;
+        const intervalId = setInterval(function () {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let pixels = imgData.data;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    let r = pixels[i];
+                    let g = pixels[i + 1];
+                    let b = pixels[i + 2];
+                    let a = pixels[i + 3];
+                    /* 01 随机噪声
+                    pixels[i] = (r - 10 + Math.random() * 20) % 256;
+                    pixels[i + 1] = (g - 10 + Math.random() * 20) % 256;
+                    pixels[i + 2] = (b - 10 + Math.random() * 20) % 256;
+                    */
+                    /* 02 随机错位
+                    let randomIndex = i - 10 + Math.floor(Math.random() * 20);
+                    pixels[i] = pixels[randomIndex];
+                    pixels[i + 1] = pixels[randomIndex + 1];
+                    pixels[i + 2] = pixels[randomIndex + 2];
+                    */
+                    /* 03 整体随机错位
+                    let randomOffset = Math.floor(Math.random() * 10) * 4;
+                    pixels[i] = pixels[i + 4 + randomOffset];
+                    pixels[i + 1] = pixels[i + 5 + randomOffset];
+                    pixels[i + 2] = pixels[i + 6 + randomOffset];
+                    */
+                    /* 04 整体错位
+                    pixels[i] = pixels[i + uniOffset];
+                    pixels[i + 1] = pixels[i + 1 + uniOffset];
+                    pixels[i + 2] = pixels[i + 2 + uniOffset];
+                    */
+                    /* 05 隔项反色
+                    if (i % 16 <= 4) {
+                        pixels[i] = 255 - r;
+                        pixels[i + 1] = 255 - g;
+                        pixels[i + 2] = 255 - b;
+                    }
+                    */
+                    /* 06 隔项互换（i += 8）
+                    let r_ = pixels[i];
+                    let g_ = pixels[i + 1];
+                    let b_ = pixels[i + 2];
+                    pixels[i] = pixels[i + 100];
+                    pixels[i + 1] = pixels[i + 101];
+                    pixels[i + 2] = pixels[i + 102];
+                    pixels[i + 100] = r_;
+                    pixels[i + 101] = g_;
+                    pixels[i + 102] = b_;
+                    */
+                    /* 07 动态偏移
+                    pixels[i] = pixels[(i + dynamicOffset * 4) % canvasSize];
+                    pixels[i + 1] = pixels[(i + 1 + dynamicOffset * 4) % canvasSize];
+                    pixels[i + 2] = pixels[(i + 2 + dynamicOffset * 4) % canvasSize];
+                    dynamicOffset = (dynamicOffset + 1) % canvasSize;
+                    */
+                }
+                let pixels_ = pixels.slice(dynamicOffset * 5); // 原应为 4
+                let _pixels = pixels.slice(0, dynamicOffset * 5);
+                pixels_.forEach(function (item, index) {
+                    pixels[index] = pixels_[index];
+                })
+                _pixels.forEach(function (item, index) {
+                    pixels[index + dynamicOffset * 5] = item;
+                })
+                dynamicOffset = (dynamicOffset + 1) % canvasSize;
+                ctx.putImageData(imgData, 0, 0);
+            }
+        }, 1000 / 30);
+        // 切换全屏
+        function toggleFullScreen() {
+            canvas.requestFullscreen();
+        }
+    </script>
+</body>
+
+</html>

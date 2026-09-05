@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TUI Simulator by Burger</title>
+    <style>
+        @font-face {
+            font-family: 'Moder-DOS-437-2';
+            src: url('Moder-DOS-437-2.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Fixedsys';
+            src: url('fixedsys.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Zpix';
+            src: url('zpix.ttf') format('truetype');
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+        }
+
+        .screen-wrapper {
+            position: fixed;
+            top: 0;
+            left: 10%;
+            display: grid;
+            width: 80%;
+            height: 100%;
+            z-index: -1;
+            background: #000;
+        }
+
+        .screen {
+            position: fixed;
+            top: 1%;
+            left: 12%;
+            display: grid;
+            width: 76%;
+            height: 98%;
+            align-items: center;
+            justify-items: center;
+            grid-template-columns: repeat(80, 1fr);
+            grid-template-rows: repeat(25, 1fr);
+            cursor: none;
+            user-select: none;
+            font-family: 'Fixedsys', 'Zpix', sans-serif;
+            font-size: 23px;
+        }
+
+        .display-unit {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .display-unit:hover {
+            /* 这里没用到鼠标光标，留给其他作品备用 */
+            filter: invert(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="screen-wrapper">
+        <div class="screen"></div>
+    </div>
+    <script>
+        // 00 - 全局通用对象
+        const screen = document.querySelector(".screen");
+        const screenWrapper = document.querySelector(".screen-wrapper");
+        let char;
+        addEventListener('load', function () {
+            init();
+            main.load();
+            main.startTimer(); // 开始倒计时
+        });
+        // 初始化显示单元
+        function init() {
+            for (let i = 0; i < 2000; i++) {
+                let div = document.createElement("div");
+                div.classList.add("display-unit");
+                // 默认是透明（黑底）白字
+                div.style.background = "transparent";
+                div.style.color = "#fff";
+                screen.appendChild(div);
+            }
+            char = document.querySelectorAll(".display-unit");
+            // 禁用右键菜单
+            screen.addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+            });
+        }
+        // 渲染矩形
+        function renderRect(range, color, options = { overwrite: false }) {
+            for (let x = range.x1 - 1; x <= range.x2 - 1; x++) {
+                for (let y = range.y1 - 1; y <= range.y2 - 1; y++) {
+                    char[x + y * 80].style.background = color;
+                    if (options.overwrite) {
+                        char[x + y * 80].innerHTML = ""; // 覆写文字
+                    }
+                }
+            }
+        }
+        // 渲染文本（单行）
+        function renderTextBar(line, position, text, color) {
+            let x;
+            switch (position) {
+                case 'center':
+                    // 居中
+                    x = Math.floor((80 - text.length) / 2);
+                    break;
+                case 'left':
+                    // 左对齐
+                    x = 0;
+                    break;
+                case 'right':
+                    // 右对齐
+                    x = 80 - text.length;
+                    break;
+                default:
+                    break;
+            }
+            let y = line - 1;
+            for (let i = 0; i < text.length; i++) {
+                char[x + i + y * 80].innerHTML = text[i];
+                char[x + i + y * 80].style.color = color;
+            }
+        }
+        // 渲染文本（多行）
+        // 这块稍微复杂，可能还有 bug，以后使用时注意记录
+        function renderTextArea(range, text, color, options = { breakWords: false }) {
+            // 字符相对位置
+            let left = 0;
+            let top = 0;
+            let width = range.x2 - range.x1;
+            for (let i = 0; i < text.length; i++) {
+                // 计算绝对位置
+                let x = range.x1 + left - 1;
+                let y = range.y1 + top - 1;
+                // 高度溢出截断
+                if (y > range.y2 - 1) {
+                    break;
+                }
+                // 换行处理
+                if (text[i] == "\n") {
+                    // 换行符不占首位
+                    if (left == 0 && text[i - 1] != "\n") {
+                        continue;
+                    }
+                    // 其他情况正常换行
+                    left = 0;
+                    top++;
+                } else {
+                    // 换行不截断单词（默认）
+                    // 对于不在行尾的空格，需要判断本行剩余空间能否容纳下一个单词
+                    if (!options.breakWords && (text[i] == " " && left != width)) {
+                        // 空格不占首位
+                        if (left == 0) {
+                            continue;
+                        }
+                        // 计算下个单词的长度
+                        let length;
+                        if (text.slice(i + 1).indexOf(" ") == -1) {
+                            length = text.slice(i + 1).length; // 最后一个单词
+                        } else {
+                            length = text.slice(i + 1).indexOf(" "); // 一般情况
+                        }
+                        if (length > width - left) {
+                            // 空间不足时提前换行
+                            left = 0;
+                            top++;
+                            continue; // 打断后面的正常打印步骤，否则行首会多一个空格
+                        }
+                    }
+                    // 前进一格
+                    top += Math.floor(left / (width));
+                    left = (left + 1) % (width + 1);
+                }
+                // 字符填充必须放在所有 break 和 continue 后面，否则会溢出
+                char[x + y * 80].innerHTML = text[i];
+                char[x + y * 80].style.color = color;
+            }
+        }
+        // 清屏
+        function clearScreen(color = "#000") {
+            // 单个文字背景透明，颜色只应用到容器
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 25 }, "transparent", { overwrite: true });
+            screenWrapper.style.background = color;
+        }
+        // 崩塌（彩蛋）
+        let collapseInterval; // 这里没有设置为局部变量是为了保留一个隐藏功能：快速连击 Esc（两次及以上）可以使崩塌效果持续存在（interval 不会被清除）
+        function collapse() {
+            collapseInterval = setInterval(function () {
+                let floating = 0; // 当前悬浮的字符数
+                for (let i = char.length - 81; i >= 0; i--) {
+                    if (((char[i + 80].innerHTML == '' || char[i + 80].innerHTML == ' ') && char[i + 80].style.background == 'transparent') && !((char[i].innerHTML == '' || char[i].innerHTML == ' ') && char[i].style.background == 'transparent')) { // 非空字符下方为空字符
+                        // 将当前字符向下移动一格
+                        char[i + 80].style.background = char[i].style.background;
+                        char[i + 80].style.color = char[i].style.color;
+                        char[i + 80].innerHTML = char[i].innerHTML;
+                        char[i].style.background = 'transparent';
+                        char[i].innerHTML = '';
+                        floating++;
+                    }
+                }
+                if (floating == 0) {
+                    clearInterval(collapseInterval);
+                }
+            }, 50);
+        };
+
+        // 01 - 主界面
+        let main = {};
+        main.options = [{ line: 6, title: 'Windows 10' },
+        { line: 7, title: 'Windows 8.1' },
+        { line: 8, title: 'Windows 7' },
+        { line: 20, title: 'Windows Memory Diagnostic' }];
+        main.selectedSys = 0;
+        main.selectedGroup = 0;
+        // 载入界面
+        main.load = function () {
+            // 渲染静态元素
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 1 }, "#bfbfbf");
+            renderRect({ x1: 1, y1: 25, x2: 80, y2: 25 }, "#bfbfbf");
+            renderTextBar(1, "center", "Windows Boot Manager", "#000");
+            renderTextBar(25, "left", " ENTER=Choose", "#000");
+            renderTextBar(25, "right", "ESC=Cancel ", "#000");
+            renderTextBar(25, "center", "TAB=Menu", "#000");
+            renderTextBar(3, "left", "Choose an operating system to start, or press TAB to select a tool:", "#fff");
+            renderTextBar(4, "left", "(Use the arrow keys to highlight your choice, then press ENTER.)", "#bfbfbf");
+            renderTextBar(13, "left", "To specify an advanced option for this choice, press F8.", "#fff");
+            renderTextBar(18, "left", "Tools:", "#fff");
+            // 渲染动态元素
+            main.renderOptions(main.selectedSys);
+            // 监听键盘事件
+            addEventListener('keydown', main.listenKeydown);
+        };
+        // 退出界面
+        main.exit = function () {
+            main.stopTimer();
+            removeEventListener('keydown', main.listenKeydown);
+            clearScreen();
+        };
+        // 加载倒计时
+        main.startTimer = function () {
+            main.countdown = 29;
+            renderTextBar(14, "left", `Seconds until the highlighted choice will be started automatically: 30`, "#bfbfbf");
+            main.timer = setInterval(function () {
+                if (main.countdown > 0) {
+                    renderRect({ x1: 1, y1: 14, x2: 80, y2: 14 }, "transparent", { overwrite: true });
+                    renderTextBar(14, "left", `Seconds until the highlighted choice will be started automatically: ${main.countdown}`, "#bfbfbf");
+                    main.countdown--;
+                } else {
+                    clearInterval(main.timer);
+                    main.boot();
+                }
+            }, 1000);
+        };
+        // 清除倒计时
+        main.stopTimer = function () {
+            clearInterval(main.timer);
+            renderRect({ x1: 1, y1: 14, x2: 80, y2: 14 }, "transparent", { overwrite: true });
+        };
+        // 渲染选项
+        main.renderOptions = function (selected) {
+            main.options.forEach((item, index) => {
+                if (index == selected) {
+                    renderRect({ x1: 6, y1: item.line, x2: 75, y2: item.line }, "#bfbfbf", { overwrite: true });
+                    renderTextBar(item.line, "left", "     " + item.title, "#000");
+                    renderTextBar(item.line, "right", ">     ", "#000");
+                } else {
+                    renderRect({ x1: 6, y1: item.line, x2: 75, y2: item.line }, "transparent", { overwrite: true });
+                    renderTextBar(item.line, "left", "     " + item.title, "#bfbfbf");
+                }
+            });
+        };
+        // 启动 OS / 进入工具
+        main.boot = function () {
+            main.exit();
+            if (main.selectedGroup == 0) {
+                setTimeout(() => {
+                    fail.load();
+                }, 100);
+            } else {
+                setTimeout(() => {
+                    memTest.load();
+                }, 500);
+            }
+        };
+        // 键盘交互
+        main.listenKeydown = function (e) {
+            e = e || window.event;
+            e.preventDefault();
+            let { options, selectedSys, selectedGroup } = main; // 解构赋值
+            switch (e.keyCode) {
+                case 13: // Enter
+                    main.boot();
+                    break;
+                case 27: // Esc
+                    collapse();
+                    break;
+                case 9: // Tab
+                    main.stopTimer();
+                    selectedGroup = (selectedGroup + 1) % 2;
+                    if (selectedGroup == 0) {
+                        main.renderOptions(selectedSys);
+                        renderTextBar(13, "left", "To specify an advanced option for this choice, press F8.", "#fff");
+                    } else {
+                        main.renderOptions(3);
+                        renderRect({ x1: 1, y1: 13, x2: 80, y2: 13 }, "transparent", { overwrite: true });
+                    }
+                    break;
+                case 38: // Up arrow
+                    main.stopTimer();
+                    if (selectedGroup == 0) {
+                        selectedSys = (selectedSys - 1 + options.length - 1) % (options.length - 1);
+                        main.renderOptions(selectedSys);
+                    }
+                    break;
+                case 40: // Down arrow
+                    main.stopTimer();
+                    if (selectedGroup == 0) {
+                        selectedSys = (selectedSys + 1 + options.length - 1) % (options.length - 1);
+                        main.renderOptions(selectedSys);
+                    }
+                    break;
+                case 119: // F8
+                    main.exit();
+                    setTimeout(() => {
+                        advanced.load();
+                    }, 100);
+                    break;
+            }
+            main = { ...main, selectedSys, selectedGroup }; // 同步更改
+        };
+
+        // 02 - 启动失败界面
+        let fail = {};
+        // 载入界面
+        fail.load = function () {
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 1 }, "#bfbfbf");
+            renderRect({ x1: 1, y1: 25, x2: 80, y2: 25 }, "#bfbfbf");
+            renderTextBar(1, "center", "Windows Boot Manager", "#000");
+            renderTextBar(25, "left", " ENTER=OS Selection", "#000");
+            renderTextBar(25, "right", "ESC=UEFI Firmware Settings ", "#000");
+            renderTextArea({ x1: 1, y1: 3, x2: 80, y2: 4 }, "Windows failed to start. A recent hardware or software change might be the cause. To fix the problem:", "#bfbfbf");
+            renderTextArea({ x1: 3, y1: 6, x2: 80, y2: 8 }, '1. Insert your Windows installation disc and restart your computer.\n2. Choose your language settings, and then click "Next."\n3. Click "Repair your computer."', "#bfbfbf");
+            renderTextArea({ x1: 1, y1: 10, x2: 80, y2: 11 }, "If you do not have this disc, contact your system administrator or computer manufacturer for assistance.", "#bfbfbf");
+            renderTextArea({ x1: 5, y1: 13, x2: 80, y2: 17 }, "\n\n\nStatus: \n\nInfo: ", "#bfbfbf");
+            renderTextArea({ x1: 13, y1: 15, x2: 80, y2: 15 }, "0xc000000f", "#fff");
+            renderTextArea({ x1: 11, y1: 17, x2: 80, y2: 18 }, "An unexpected error has occurred.", "#fff");
+            addEventListener('keydown', fail.listenKeydown);
+        };
+        // 退出界面
+        fail.exit = function () {
+            removeEventListener('keydown', fail.listenKeydown);
+            clearScreen();
+        };
+        // 键盘交互
+        fail.listenKeydown = function (e) {
+            e = e || window.event;
+            e.preventDefault();
+            switch (e.keyCode) {
+                case 13: // Enter
+                    fail.exit();
+                    main.load();
+                    break;
+                case 27: // Esc
+                    collapse();
+                    break;
+            }
+        };
+
+        // 03 - 高级启动选项
+        let advanced = {};
+        // 选项与描述
+        advanced.options = [{ line: 6, title: "Safe Mode", description: "Start Windows with only the core drivers and services. Use when you cannot boot after installing a new device or driver." },
+        { line: 7, title: "Safe Mode with Networking", description: "Start Windows with core drivers, plus networking support." },
+        { line: 8, title: "Safe Mode with Command Prompt", description: "Start Windows with core drivers, and launch the command prompt." },
+        { line: 10, title: "Enable Boot Logging", description: "Creates ntbtlog.txt, which lists all drivers that load during startup, including the last file to load before a failure." },
+        { line: 11, title: "Enable low-resolution video", description: "Set or reset the display resolution. Start Windows in low-resolution display mode." },
+        { line: 12, title: "Debugging Mode", description: "Enable Windows kernel debugger." },
+        { line: 13, title: "Disable automatic restart on system failure", description: "Prevent Windows from automatically rebooting after a crash." },
+        { line: 14, title: "Disable Driver Signature Enforcement", description: "Allows drivers containing improper signatures to be loaded." },
+        { line: 15, title: "Disable Early Launch Anti-Malware Driver", description: "Allows drivers to initialize without being measured by the anti-malware driver." },
+        { line: 17, title: "Start Windows Normally", description: "Start Windows with its regular settings." }
+        ];
+        // 载入界面
+        advanced.load = function () {
+            // 渲染静态元素
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 1 }, "#bfbfbf");
+            renderRect({ x1: 1, y1: 25, x2: 80, y2: 25 }, "#bfbfbf");
+            renderTextBar(1, "center", "Advanced Boot Options", "#000");
+            renderTextBar(25, "left", " ENTER=Choose", "#000");
+            renderTextBar(25, "right", "ESC=Cancel ", "#000");
+            renderTextBar(3, "left", "Choose Advanced Options for:", "#bfbfbf");
+            renderTextArea({ x1: 30, y1: 3, x2: 80, y2: 3 }, main.options[main.selectedSys].title, "#fff");
+            renderTextBar(4, "left", "(Use the arrow keys to highlight your choice.)", "#bfbfbf");
+            renderTextBar(19, "left", "Description: ", "#bfbfbf");
+            // 渲染动态元素
+            advanced.selected_mode = 0;
+            advanced.renderOptions(advanced.selected_mode);
+            // 监听键盘事件
+            addEventListener('keydown', advanced.listenKeydown);
+        }
+        // 退出界面
+        advanced.exit = function () {
+            removeEventListener('keydown', advanced.listenKeydown);
+            clearScreen();
+        };
+        // 键盘交互
+        advanced.listenKeydown = function (e) {
+            e = e || window.event;
+            e.preventDefault();
+            let { options, selected_mode } = advanced; // 解构赋值
+            switch (e.keyCode) {
+                case 13: // Enter
+                    advanced.exit();
+                    setTimeout(() => {
+                        fail.load();
+                    }, 100);
+                    break;
+                case 27: // Esc
+                    advanced.exit();
+                    main.load();
+                    break;
+                case 38: // Up arrow
+                    selected_mode = (selected_mode - 1 + options.length) % options.length;
+                    advanced.renderOptions(selected_mode);
+                    break;
+                case 40: // Down arrow
+                    selected_mode = (selected_mode + 1 + options.length) % options.length;
+                    advanced.renderOptions(selected_mode);
+                    break;
+            }
+            advanced = { ...advanced, selected_mode }; // 同步更改
+        };
+        // 渲染选项
+        advanced.renderOptions = function (selected) {
+            // 选项标题
+            advanced.options.forEach((item, index) => {
+                if (index == selected) {
+                    renderRect({ x1: 1, y1: item.line, x2: item.title.length + 4, y2: item.line }, "#bfbfbf", { overwrite: true });
+                    renderTextBar(item.line, "left", "    " + item.title, "#000");
+                } else {
+                    renderRect({ x1: 1, y1: item.line, x2: item.title.length + 4, y2: item.line }, "transparent", { overwrite: true });
+                    renderTextBar(item.line, "left", "    " + item.title, "#bfbfbf");
+                }
+            });
+            // 选项描述
+            renderRect({ x1: 14, y1: 19, x2: 75, y2: 24 }, "transparent", { overwrite: true });
+            renderTextArea({ x1: 14, y1: 19, x2: 75, y2: 24 }, advanced.options[selected].description, "#fff");
+        };
+
+        // 04 - 内存诊断工具
+        let memTest = {};
+        // 载入界面
+        memTest.load = function () {
+            // 渲染静态元素
+            clearScreen('#00007f');
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 1 }, "#bfbfbf");
+            renderRect({ x1: 1, y1: 25, x2: 80, y2: 25 }, "#bfbfbf");
+            renderTextBar(1, "center", "Windows Memory Diagnostics Tool", "#00007f");
+            renderTextBar(25, "left", " F1=Options", "#00007f");
+            renderTextBar(25, "right", "ESC=Exit ", "#00007f");
+            renderTextBar(4, "left", "Windows is checking for memory problems ...", "#bfbfbf");
+            renderTextBar(5, "left", "This might take several minutes.", "#bfbfbf");
+            renderTextBar(12, "left", "Status:", "#bfbfbf");
+            renderTextBar(13, "left", "No problems have been detected yet.", "#ffff00");
+            renderTextArea({ x1: 1, y1: 15, x2: 75, y2: 16 }, "Although the test may appear inactive at times, it is still running. Please wait until testing is complete...", "#ffff00")
+            renderTextArea({ x1: 1, y1: 18, x2: 75, y2: 19 }, "Windows will restart the computer automatically. Test results will be displayed again after you log on.", "#fff");
+            // 渲染动态元素
+            if (!memTest.interval) {
+                memTest.startProgress(); // 仅当 interval 不存在时才初始化
+            }
+            // 监听键盘事件
+            addEventListener('keydown', memTest.listenKeydown);
+        };
+        // 退出界面
+        memTest.exit = function (stopProgress = true) {
+            if (stopProgress) {
+                clearInterval(memTest.interval);
+                memTest.interval = undefined;
+                memTest.times = 2;
+                memTest.phase = 1;
+                memTest.progress = 0;
+            }
+            removeEventListener('keydown', memTest.listenKeydown);
+            clearScreen();
+        };
+        // 启动进度条
+        memTest.times = 2;
+        memTest.phase = 1;
+        memTest.progress = 0;
+        memTest.paused = false; // 暂停标签，进入选项界面时用到
+        memTest.startProgress = function () {
+            memTest.interval = setInterval(function () {
+                if (memTest.paused) return;
+                // 计算进度
+                memTest.phase += Math.floor((memTest.progress) / 99);
+                memTest.progress = (memTest.progress + 1) % 100;
+                let overallProgress = Math.floor((memTest.phase - 1 + memTest.progress / 100) / memTest.times * 100);
+                // 报告进度
+                renderTextBar(7, "left", `Running test pass ${String(memTest.phase).padStart(2, ' ')} of ${String(memTest.times).padStart(2, ' ')}: ${String(memTest.progress).padStart(2, '0')}% complete`, "#bfbfbf");
+                renderTextBar(8, "left", `Overall test status: ${String(overallProgress).padStart(2, '0')}% complete`, "#bfbfbf");
+                renderRect({ x1: 1, y1: 9, x2: 80, y2: 9 }, "transparent");
+                renderRect({ x1: 1, y1: 9, x2: Math.floor(memTest.progress / 100 * 80), y2: 9 }, "#bfbfbf");
+                // 完成后自动重启
+                if (overallProgress == 100) {
+                    memTest.restart();
+                }
+            }, 300);
+        };
+        // 重启
+        memTest.restart = function () {
+            memTest.exit();
+            // 重置参数
+            main.selectedGroup = 0;
+            main.selectedSys = 0;
+            main.load();
+            main.startTimer();
+            memTestOptions.selectedOptions = [1, 0];
+        };
+        // 键盘交互
+        memTest.listenKeydown = function (e) {
+            e = e || window.event;
+            e.preventDefault();
+            switch (e.keyCode) {
+                case 27: // Esc
+                    memTest.restart();
+                    break;
+                case 112: // F1
+                    memTest.exit(false);
+                    memTestOptions.load();
+                    break;
+            }
+        };
+
+        // 05 - 内存诊断工具选项
+        let memTestOptions = {};
+        // 选项与描述
+        memTestOptions.options = [[{ line: 5, title: "Basic", description: "The Basic tests are MATS+, INVC, and SCHCKR (cache enabled)." },
+        { line: 6, title: "Standard", description: "The Standard tests include all the Basic tests, plus LRAND, Stride6 (cache enabled), CHCKR3, WMATS+, and WINVC." },
+        { line: 7, title: "Extended", description: "The Extended tests include all the Standard tests plus MATS+ (cache disabled), Stride38, WSCHCKR, WStride-6, CHCKR4, WCHCKR3, ERAND, Stride6 (cache disabled), and CHCKR8." }
+        ], [{ line: 14, title: "Default", description: "Use the default cache setting of each test." },
+        { line: 15, title: "On", description: "Turn the cache on for all tests." },
+        { line: 16, title: "Off", description: "Turn the cache off for all tests." }]];
+        memTestOptions.selectedOptions = [1, 0];
+        // 载入界面
+        memTestOptions.load = function () {
+            memTest.paused = true; // 暂停进度
+            memTestOptions.selectedGroup = 0;
+            // 临时选项
+            memTestOptions.tempOptions = [memTestOptions.selectedOptions[0], memTestOptions.selectedOptions[1]];
+            // 渲染静态元素
+            clearScreen('#00007f');
+            renderRect({ x1: 1, y1: 1, x2: 80, y2: 1 }, "#bfbfbf");
+            renderRect({ x1: 1, y1: 25, x2: 80, y2: 25 }, "#bfbfbf");
+            renderTextBar(1, "center", "Windows Memory Diagnostics Tool - Options", "#00007f");
+            renderTextBar(25, "left", " TAB=Next", "#00007f");
+            renderTextBar(25, "center", "F10=Apply", "#00007f");
+            renderTextBar(25, "right", "ESC=Cancel ", "#00007f");
+            renderTextBar(3, "left", "Test Mix: ", "#bfbfbf");
+            renderTextBar(9, "left", "Description: ", "#bfbfbf");
+            renderTextBar(12, "left", "Cache: ", "#bfbfbf");
+            renderTextBar(18, "left", "Description: ", "#bfbfbf");
+            renderTextBar(20, "left", "Pass Count (0 - 15):   2", "#bfbfbf");
+            renderTextBar(22, "left", "Description: ", "#bfbfbf");
+            renderTextArea({ x1: 14, y1: 22, x2: 73, y2: 23 }, "Set the total number of times the entire test mix will repeat (Max = 15).", "#fff");
+            // 渲染动态元素
+            memTestOptions.renderOptions();
+            // 监听键盘事件
+            addEventListener('keydown', memTestOptions.listenKeydown);
+        };
+        // 退出界面
+        memTestOptions.exit = function () {
+            memTestOptions.tempOptions = undefined; // 清除临时选项
+            memTest.paused = false; // 恢复进度
+            removeEventListener('keydown', memTestOptions.listenKeydown);
+            clearScreen();
+        };
+        // 渲染选项
+        memTestOptions.renderOptions = function () {
+            let { options, tempOptions, selectedGroup } = memTestOptions; // 解构赋值
+            // 选项标题
+            options.forEach((group, i) => {
+                options[i].forEach((option, j) => {
+                    if (i == selectedGroup && j == tempOptions[i]) {
+                        renderRect({ x1: 5, y1: option.line, x2: 14, y2: option.line }, "#bfbfbf", { overwrite: true });
+                        renderTextBar(option.line, "left", "    " + option.title, "#00007f");
+                    } else {
+                        renderRect({ x1: 5, y1: option.line, x2: 14, y2: option.line }, "transparent", { overwrite: true });
+                        renderTextBar(option.line, "left", "    " + option.title, "#bfbfbf");
+                    }
+                });
+            });
+            // 选项描述
+            renderRect({ x1: 14, y1: 9, x2: 73, y2: 11 }, "transparent", { overwrite: true });
+            renderTextArea({ x1: 14, y1: 9, x2: 73, y2: 11 }, options[0][tempOptions[0]].description, "#fff");
+            renderRect({ x1: 14, y1: 18, x2: 73, y2: 18 }, "transparent", { overwrite: true });
+            renderTextArea({ x1: 14, y1: 18, x2: 73, y2: 18 }, options[1][tempOptions[1]].description, "#fff");
+        };
+        // 键盘交互
+        memTestOptions.listenKeydown = function (e) {
+            e = e || window.event;
+            e.preventDefault();
+            let { options, selectedOptions, selectedGroup, tempOptions, renderOptions } = memTestOptions; // 解构赋值
+            switch (e.keyCode) {
+                case 27: // Esc
+                    memTestOptions.exit();
+                    memTest.load();
+                    break;
+                case 9: // Tab
+                    selectedGroup = (selectedGroup + 1) % 2;
+                    // 等待更改同步完成后再渲染
+                    setTimeout(() => {
+                        renderOptions();
+                    }, 0);
+                    break;
+                case 121: // F10
+                    selectedOptions = tempOptions; // 保存选项
+                    memTestOptions.exit();
+                    memTest.load();
+                    break;
+                case 38: // Up arrow
+                    tempOptions[selectedGroup] = (tempOptions[selectedGroup] - 1 + options[selectedGroup].length) % options[selectedGroup].length;
+                    renderOptions();
+                    break;
+                case 40: // Down arrow
+                    tempOptions[selectedGroup] = (tempOptions[selectedGroup] + 1 + options[selectedGroup].length) % options[selectedGroup].length;
+                    renderOptions();
+                    break;
+            }
+            memTestOptions = { ...memTestOptions, selectedOptions, selectedGroup, tempOptions }; // 同步更改
+        };
+    </script>
+</body>
+
+</html>

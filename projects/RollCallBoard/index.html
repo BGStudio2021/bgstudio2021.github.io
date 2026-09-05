@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>高二（xx）班点名板</title>
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom right, #BBDEFB, #C5CAE9);
+            overflow: hidden;
+            user-select: none;
+            font-family: sans-serif;
+        }
+
+        .container {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.7);
+            overflow-x: hidden;
+            overflow-y: auto;
+            box-shadow: 0 4px 48px rgba(0, 0, 0, 0.25);
+            animation: shrink 0.5s cubic-bezier(0.000, 0.75, 0.5, 1.5) 0.25s forwards;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes shrink {
+            from {}
+
+            to {
+                width: calc(100% - 160px);
+                height: calc(100% - 128px);
+                margin: 48px 64px;
+                opacity: 1;
+                border-radius: 24px;
+            }
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #3F51B5;
+            transform-origin: bottom center;
+            animation: emerge-1 0.3s cubic-bezier(0.000, 0.75, 0.5, 1.5) 0.5s forwards;
+            transform: scale(0);
+        }
+
+        .subtitle {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #3F51B5;
+        }
+
+        @keyframes emerge-1 {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .name-list {
+            text-align: center;
+        }
+
+        .name {
+            font-size: 20px;
+            margin: 6px;
+            padding: 8px;
+            width: calc(100% / 10);
+            display: inline-block;
+            vertical-align: center;
+            text-align: center;
+            border-radius: 8px;
+            background: #C5CAE9;
+            animation: emerge-2 0.75s cubic-bezier(0.230, 1.000, 0.320, 1.000) forwards;
+            transform: scale(0) translateY(200px);
+            transform-origin: top center;
+            transition-property: transform, opacity;
+            transition-duration: 0.1s, 0.1s;
+        }
+
+        @keyframes emerge-2 {
+            from {
+                transform: scale(0) translateY(200px);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 1;
+            }
+
+            25% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.25;
+            }
+
+            75% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .name-highlighted {
+            animation: highlight 0.75s forwards !important;
+            transform-origin: center center !important;
+            background: #3F51B5 !important;
+            color: #fff !important;
+        }
+
+        @keyframes highlight {
+            0% {}
+
+            14.29% {
+                transform: scale(0.85, 1.15);
+            }
+
+            28.57% {
+                transform: scale(1.15, 0.85);
+            }
+
+            42.86% {
+                transform: scale(0.9, 1.1);
+            }
+
+            57.14% {
+                transform: scale(1.1, 0.9);
+            }
+
+            71.43% {
+                transform: scale(0.95, 1.05);
+            }
+
+            85.71% {
+                transform: scale(1.05, 0.95);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1.5px solid #9FA8DA;
+            animation: extend 1s cubic-bezier(0.230, 1.000, 0.320, 1.000) 2s forwards;
+            transform: scale(0, 1);
+        }
+
+        @keyframes extend {
+            from {
+                transform: scale(0, 1);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .draw-area {
+            text-align: center;
+            animation: zoom 0.3s cubic-bezier(0.000, 0.75, 0.5, 1.5) 2s forwards;
+            transform: scale(1.25);
+            opacity: 0;
+        }
+
+        @keyframes zoom {
+            from {
+                transform: scale(1.25);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .draw-num {
+            margin: 4px 0;
+        }
+
+        .reduce-num,
+        .draw-num-text,
+        .increase-num {
+            display: inline-block;
+            vertical-align: middle;
+            height: 24px;
+            background: #C5CAE9;
+            transition: 0.1s;
+        }
+
+        .reduce-num {
+            border-radius: 8px 0 0 8px;
+            padding: 4px;
+        }
+
+        .draw-num-text {
+            padding: 4px 12px;
+        }
+
+        .increase-num {
+            border-radius: 0 8px 8px 0;
+            padding: 4px;
+        }
+
+        .reduce-num:hover,
+        .draw-num-text:hover,
+        .increase-num:hover {
+            background: #9FA8DA;
+        }
+
+        .reduce-num:active,
+        .draw-num-text:active,
+        .increase-num:active {
+            background: #7986CB;
+        }
+
+        .btn {
+            border: none;
+            outline: none;
+            background: #3F51B5;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 32px !important;
+            font-size: 16px;
+            margin-top: 16px;
+            transition: 0.1s;
+        }
+
+        .btn:not(:disabled):hover {
+            background: #5C6BC0;
+        }
+
+        .btn:not(:disabled):active {
+            background: #3949AB;
+        }
+
+        .btn-disabled {
+            background: #9FA8DA;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #C5CAE9;
+            color: #000;
+        }
+
+        .btn-secondary:hover {
+            background: #9FA8DA !important;
+        }
+
+        .btn-secondary:active {
+            background: #7986CB !important;
+        }
+
+        .draw-name:not(:disabled) {
+            animation: outline 2s 2.2s infinite;
+        }
+
+        @keyframes outline {
+            0% {
+                outline: 0px solid #3F51B5;
+            }
+
+            75% {
+                outline: 16px solid rgba(0, 0, 0, 0);
+            }
+
+            100% {
+                outline: 16px solid rgba(0, 0, 0, 0);
+            }
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            14.29% {
+                transform: translate(-16px, 0);
+            }
+
+            28.57% {
+                transform: translate(16px, 0);
+            }
+
+            42.86% {
+                transform: translate(-16px, 0);
+            }
+
+            57.14% {
+                transform: translate(16px, 0);
+            }
+
+            71.43% {
+                transform: translate(-16px, 0);
+            }
+
+            85.71% {
+                transform: translate(16px, 0);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        .btn-icon {
+            width: 24px;
+            height: 24px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: 0.1s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon:active {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .github,
+        .bgm,
+        .fullscreen {
+            position: absolute;
+            bottom: 64px;
+            animation: opacify 0.2s 2s forwards;
+            opacity: 0;
+        }
+
+        .github {
+            right: 160px;
+        }
+
+        .fullscreen {
+            right: 80px;
+        }
+
+        .bgm {
+            right: 120px;
+        }
+
+        @keyframes opacify {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .author {
+            position: absolute;
+            left: 88px;
+            bottom: 68px;
+            animation: opacify 0.2s 2s forwards;
+            opacity: 0;
+        }
+
+        .author img {
+            height: 24px;
+        }
+
+        a {
+            background-color: transparent !important;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="title">高二（xx）班点名板</div>
+        <hr>
+        <div class="name-list"></div>
+        <hr>
+        <div class="draw-area">
+            <div class="subtitle">随机抽取</div>
+            <div class="draw-num">
+                <div class="reduce-num" onclick="reduceNum();"><img src="./icons/remove.svg"></div>
+                <div class="draw-num-text">1 人</div>
+                <div class="increase-num" onclick="increaseNum();"><img src="./icons/add.svg"></div>
+            </div>
+            <button class="btn btn-secondary show-drawn" onclick="toggleShowDrawn();"></button>
+            <button class="btn draw-name" onclick="drawName();"
+                style="margin-left: 16px;margin-right: 16px;">开始抽取</button>
+            <button class="btn btn-secondary show-drawn" onclick="resetDrawn();">重置已抽取</button>
+        </div>
+    </div>
+    <div class="btn-icon github"><a href="https://github.com/BGStudio2021/RollCallBoard" target="_blank"><img
+                src="./icons/github.svg"></a></div>
+    <div class="btn-icon bgm" onclick="toggleBgm();"><img src="./icons/music_off.svg"></div>
+    <div class="btn-icon fullscreen" onclick="toggleFullScreen();"><img src="./icons/fullscreen.svg"></div>
+    <div class="author"><img src="icons/Burger-Logo-20250517.svg"></div>
+    <script>
+        let nameList = [
+            "张三", "李四", "王五", "赵六", "钱七", "孙八", "周九", "吴十", "郑十一", "王十二",
+            "刘一", "陈二", "杨三", "黄四", "赵五", "吴六", "周七", "徐八", "孙九", "朱十",
+            "胡十一", "林十二", "高十三", "马十四", "梁十五", "宋十六", "郑十七", "谢十八", "韩十九", "唐二十",
+            "冯二一", "董二二", "萧二三", "程二四", "曹二五", "袁二六", "邓二七", "许二八", "傅二九", "沈三十",
+            "曾三一", "彭三二", "吕三三", "苏三四", "卢三五", "蒋三六", "蔡三七", "贾三八", "丁三九", "魏四十",
+            "薛四一", "叶四二", "阎四三", "余四四", "潘四五", "杜四六", "戴四七", "夏四八", "钟四九", "汪五十"
+        ];
+        const originalNameList = nameList.slice();
+        const nameListDiv = document.querySelector(".name-list");
+        window.onload = function () {
+            // 显示所有名字
+            nameList.forEach((name, index) => {
+                const nameDiv = document.createElement("div");
+                nameDiv.classList.add("name");
+                nameDiv.innerText = name;
+                nameListDiv.appendChild(nameDiv);
+                nameDiv.style.animationDelay = `${index * 0.01 + 0.8}s`;
+            });
+            excludeName();
+        }
+        // 排除指定名字
+        const excludedNameList = [];
+        function excludeName() {
+            excludedNameList.forEach((name) => {
+                const _index = nameList.indexOf(name);
+                if (_index !== -1) {
+                    nameList.splice(_index, 1);
+                }
+                if (drawnNameArr.indexOf(name) == -1) {
+                    drawnNameArr.push(name);
+                }
+            });
+        }
+        // 加减人数
+        const drawNumText = document.querySelector(".draw-num-text");
+        let num = 1;
+        function reduceNum() {
+            if (num > 1 && !drawNameBtn.disabled) {
+                num--;
+                drawNumText.innerText = `${num} 人`;
+            }
+        }
+        function increaseNum() {
+            if (num < nameList.length && !drawNameBtn.disabled) {
+                num++;
+                drawNumText.innerText = `${num} 人`;
+            }
+        }
+        // 启用 / 禁用抽取按钮
+        const drawNameBtn = document.querySelector(".draw-name");
+        function toggleDrawNameBtn(state) {
+            if (!state) {
+                drawNameBtn.classList.add("btn-disabled");
+                drawNameBtn.disabled = true;
+            } else {
+                drawNameBtn.classList.remove("btn-disabled");
+                drawNameBtn.disabled = false;
+            }
+        }
+        // 显示 / 隐藏抽取动画
+        let shakeInterval;
+        function toggleDrawAnimation(state) {
+            if (state) {
+                document.querySelectorAll(".name").forEach((nameDiv, index) => {
+                    if (drawnNameArr.includes(nameDiv.innerText) && showDrawn) {
+                        nameDiv.style.background = "#C8E6C9";
+                        nameDiv.style.color = "#000";
+                    } else {
+                        nameDiv.style.transform = "none";
+                        nameDiv.style.animation = `flash 1s linear ${index * 0.01}s infinite`;
+                        nameDiv.style.background = "#C5CAE9";
+                        nameDiv.style.color = "#000";
+                    }
+                });
+                shakeInterval = setInterval(() => {
+                    document.querySelectorAll(".name").forEach((nameDiv) => {
+                        if (drawnNameArr.includes(nameDiv.innerText) && showDrawn) {
+                            nameDiv.style.background = "#C8E6C9";
+                            nameDiv.style.color = "#000";
+                        } else {
+                            nameDiv.style.transform = `translate(${Math.random() * 16 - 8}px, ${Math.random() * 16 - 8}px)`;
+                        }
+                    });
+                }, 10);
+            } else {
+                clearInterval(shakeInterval);
+                document.querySelectorAll(".name").forEach((nameDiv) => {
+                    nameDiv.style.transform = "none";
+                    nameDiv.style.animation = "none";
+                });
+            }
+        }
+        // 随机抽取
+        let drawnNameArr = [];
+        function drawName() {
+            resetHighlightedName();
+            toggleDrawNameBtn(false);
+            toggleDrawAnimation(true);
+            setTimeout(() => {
+                const nameArr = [];
+                for (let i = 0; i < num; i++) {
+                    const randomIndex = Math.floor(Math.random() * nameList.length);
+                    nameArr.push(nameList[randomIndex]);
+                    drawnNameArr.push(nameList[randomIndex]);
+                    nameList.splice(randomIndex, 1);
+                }
+                toggleDrawAnimation(false);
+                if (num > nameList.length) {
+                    num = nameList.length;
+                    drawNumText.innerText = `${num} 人`;
+                }
+                if (num !== 0) {
+                    toggleDrawNameBtn(true);
+                }
+                // 显示抽取结果
+                document.querySelectorAll(".name").forEach((nameDiv) => {
+                    if (nameArr.includes(nameDiv.innerText)) {
+                        nameDiv.classList.add("name-highlighted");
+                    } else if (drawnNameArr.includes(nameDiv.innerText) && showDrawn) {
+                        nameDiv.style.background = "#C8E6C9";
+                        nameDiv.style.color = "#000";
+                    } else {
+                        nameDiv.style.animation = "none";
+                    }
+                });
+            }, 2250);
+        }
+        // 显示 / 隐藏已抽取
+        const showDrawnBtn = document.querySelector(".show-drawn");
+        let showDrawn;
+        if (excludedNameList.length === 0) {
+            showDrawn = true;
+            showDrawnBtn.innerText = "隐藏已抽取";
+        } else {
+            showDrawn = false;
+            showDrawnBtn.innerText = "显示已抽取";
+        }
+        function toggleShowDrawn() {
+            resetHighlightedName();
+            if (!drawNameBtn.disabled) {
+                showDrawn = !showDrawn;
+                if (showDrawn) {
+                    document.querySelectorAll(".name").forEach((nameDiv) => {
+                        nameDiv.style.transform = "none";
+                        nameDiv.style.animation = "none";
+                        if (drawnNameArr.includes(nameDiv.innerText)) {
+                            nameDiv.style.background = "#C8E6C9";
+                            nameDiv.style.color = "#000";
+                        }
+                    });
+                    showDrawnBtn.innerText = "隐藏已抽取";
+                } else {
+                    document.querySelectorAll(".name").forEach((nameDiv) => {
+                        nameDiv.style.background = "#C5CAE9";
+                        nameDiv.style.color = "#000";
+                    });
+                    showDrawnBtn.innerText = "显示已抽取";
+                }
+            }
+        }
+        // 重置已抽取
+        function resetDrawn() {
+            resetHighlightedName();
+            drawnNameArr = [];
+            nameList = originalNameList.slice();
+            document.querySelectorAll(".name").forEach((nameDiv, index) => {
+                nameDiv.style.background = "#C5CAE9";
+                nameDiv.style.color = "#000";
+            });
+            nameListDiv.style.animation = "none";
+            setTimeout(() => {
+                nameListDiv.style.animation = "shake 0.5s";
+            }, 0);
+            drawNameBtn.disabled = false;
+            drawNameBtn.classList.remove("btn-disabled");
+            num = 1;
+            drawNumText.innerText = "1 人";
+            excludeName();
+        }
+        // 切换全屏
+        const fullscreenIcon = document.querySelector(".fullscreen img");
+        function toggleFullScreen() {
+            const doc = window.document;
+            const docEl = doc.documentElement;
+            const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+            const cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+            if (!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+                requestFullScreen.call(docEl);
+                fullscreenIcon.src = "./icons/fullscreen_exit.svg";
+            } else {
+                cancelFullScreen.call(doc);
+                fullscreenIcon.src = "./icons/fullscreen.svg";
+            }
+        }
+        // 重置突出显示的名字
+        function resetHighlightedName() {
+            document.querySelectorAll(".name-highlighted").forEach((nameDiv) => {
+                nameDiv.classList.remove("name-highlighted");
+            });
+        }
+        // 打开 / 关闭背景音乐
+        const bgmIcon = document.querySelector(".bgm img");
+        let bgmAudio = new Audio("./Connected-Sky.mp3");
+        bgmAudio.loop = true;
+        function toggleBgm() {
+            if (bgmAudio.paused) {
+                bgmAudio.play();
+                bgmIcon.src = "./icons/music_note.svg";
+            } else {
+                bgmAudio.pause();
+                bgmIcon.src = "./icons/music_off.svg";
+            }
+        }
+    </script>
+</body>
+
+</html>

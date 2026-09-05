@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <title>简易 XOR 加密</title>
+    <style>
+        html {
+            background-image: url(https://api.kdcc.cn/);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .filter-overlay {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            animation: darken 0.5s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes darken {
+            from {
+                background-color: rgba(0, 0, 0, 0);
+            }
+
+            to {
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        .card {
+            position: fixed;
+            background-color: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(32px);
+            width: calc(60% - 32px);
+            max-height: calc(100% - 128px);
+            overflow-y: auto;
+            margin: 48px 20%;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 64px rgba(0, 0, 0, 0.25);
+            animation: float 0.5s 0.5s cubic-bezier(0.175, 0.885, 0.320, 1.275);
+            animation-fill-mode: forwards;
+            opacity: 0;
+            transform-origin: top center;
+            transform: scale(1.2);
+            scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0);
+        }
+
+        @keyframes float {
+            from {
+                opacity: 0;
+                transform-origin: top center;
+                transform: scale(1.2);
+            }
+
+            to {
+                opacity: 1;
+                transform-origin: top center;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                width: calc(80% - 32px);
+                margin: 48px 10%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                width: calc(90% - 32px);
+                margin: 36px 5%;
+                max-height: calc(100% - 104px);
+            }
+        }
+
+        .card-content {
+            transition-timing-function: cubic-bezier(0.230, 1.000, 0.320, 1.000);
+        }
+
+        .title {
+            margin: 16px 0 0 0;
+        }
+
+        .subtitle {
+            margin: 8px 0 8px 8px;
+            text-align: left;
+        }
+
+        .drop-area {
+            font-size: 18px;
+            margin: 16px 32px 0 32px;
+            border: 2px dashed rgba(255, 255, 255, 0.75);
+            border-radius: 8px;
+            padding: 48px 0;
+            user-select: none;
+        }
+
+        .drop-area:hover,
+        .drop-area-hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .drop-area:active,
+        .drop-area-active {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            margin: 16px 8px;
+            padding: 8px 32px;
+            border-radius: 8px;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .btn:hover {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .btn:active,
+        .btn-active {
+            background-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .input {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            border: none;
+            outline: none;
+            margin: 16px 0 0 0;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .input:hover,
+        .input-active {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .input:focus {
+            background-color: rgba(0, 0, 0, 0.2);
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .file-list {
+            background-color: rgba(255, 255, 255, 0.15);
+            list-style: none;
+            text-align: left;
+            margin: 16px 0;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .file-list li {
+            position: relative;
+            padding: 4px 8px;
+            border-radius: 4px;
+            word-wrap: break-word;
+        }
+
+        .file-list li:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .file-list li:active,
+        .file-list-li-active {
+            background-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        .list-item-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.15);
+            transition: 0.1s;
+        }
+
+        .disabled {
+            opacity: 0.5 !important;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="filter-overlay"></div>
+    <div class="card">
+        <div class="card-content">
+            <h1 class="title">简易 XOR 加密</h1>
+            <p class="subtitle" style="text-align: center;margin-left: 0;">
+                基于异或运算的简易加密算法，加密与解密功能二合一，使用 Web Worker 优化性能。<br>
+                （不支持文件夹加密。）
+            </p>
+            <div class="drop-area" id="dropArea" onclick="selectFiles();">拖放或点击选择文件</div>
+            <div style="display: inline-block;vertical-align: middle;margin-top: 16px;">密钥：</div>
+            <input type="password" class="input"
+                style="display: inline-block;vertical-align: middle;width: 50%;max-width: 256px;" id="keyInput">
+            <br>
+            <div class="btn" id="clearBtn" onclick="clearFiles();">清除</div>
+            <div class="btn" id="encryptBtn" onclick="beginEncryption();">加密/解密</div>
+            <h2 class="subtitle" id="waitingSubtitle" style="margin-top: 0;">等待中（0）</h2>
+            <ul class="file-list" id="waitingList">
+                <li>没有项目</li>
+            </ul>
+            <h2 class="subtitle" id="completedSubtitle">已完成（0）</h2>
+            <ul class="file-list" id="completedList">
+                <li>没有项目</li>
+            </ul>
+            <p style="text-align: center;">Designed by Burger Studio.</p>
+        </div>
+    </div>
+    <script>
+        // 加载 Web Worker
+        var worker = new Worker("worker.js");
+        worker.onmessage = function (event) {
+            switch (event.data.type) {
+                case 'encrypt':
+                    // 处理加密结果
+                    var { data, name } = event.data;
+                    // 将加密后的数据转为 Blob 并下载
+                    var blob = new Blob([data], {
+                        type: "application/octet-stream"
+                    });
+                    var url = URL.createObjectURL(blob);
+                    var aLink = document.createElement("a");
+                    aLink.href = url;
+                    aLink.download = name.indexOf('.xe') == -1 ? name + '.xe' : name.replace('.xe', '');
+                    aLink.click();
+                    URL.revokeObjectURL(url); // 释放 URL 对象
+                    // 更新文件列表
+                    waitingFiles.splice(waitingFiles.indexOf(name), 1);
+                    completedFiles.push(name);
+                    refreshFileLists();
+                    taskCount--; // 处理任务计数
+                    if (taskCount == 0) {
+                        // 没有任务时，恢复控件状态
+                        dropArea.classList.remove("disabled");
+                        keyInput.classList.remove("disabled");
+                        clearBtn.classList.remove("disabled");
+                        encryptBtn.classList.remove("disabled");
+                    }
+                    break;
+                case 'progress':
+                    // 处理进度
+                    var { name, progress } = event.data;
+                    document.querySelectorAll('#waitingList .list-item-progress')[waitingFiles.indexOf(name)].style.width = progress + "%";
+                    break;
+                default:
+                    break;
+            }
+        };
+        var dropArea = document.getElementById("dropArea");
+        var keyInput = document.getElementById("keyInput");
+        var clearBtn = document.getElementById("clearBtn");
+        var encryptBtn = document.getElementById("encryptBtn");
+        var waitingSubtitle = document.getElementById("waitingSubtitle");
+        var waitingList = document.getElementById("waitingList");
+        var completedSubtitle = document.getElementById("completedSubtitle");
+        var completedList = document.getElementById("completedList");
+        // 选择文件
+        var selectedFiles = [];
+        var waitingFiles = [];
+        var completedFiles = [];
+        // 点击选择文件
+        function selectFiles() {
+            var input = document.createElement("input");
+            input.type = "file";
+            input.multiple = true;
+            input.onchange = function () {
+                selectedFiles = [];
+                waitingFiles = [];
+                for (var i = 0; i < input.files.length; i++) {
+                    selectedFiles.push(input.files[i]);
+                    waitingFiles.push(input.files[i].name);
+                }
+                refreshFileLists();
+            };
+            input.click();
+        }
+        // 拖放文件
+        dropArea.ondragover = function (e) {
+            e.preventDefault();
+            this.classList.add("drop-area-hover");
+        };
+        dropArea.ondragleave = function (e) {
+            e.preventDefault();
+            this.classList.remove("drop-area-hover");
+        };
+        dropArea.ondrop = function (e) {
+            e.preventDefault();
+            this.classList.remove("drop-area-hover");
+            if (e.dataTransfer.items) {
+                selectedFiles = [];
+                waitingFiles = [];
+                for (var i = 0; i < e.dataTransfer.items.length; i++) {
+                    if (e.dataTransfer.items[i].getAsFile().size != 0) { // 不接受文件夹
+                        selectedFiles.push(e.dataTransfer.items[i].getAsFile());
+                        waitingFiles.push(e.dataTransfer.items[i].getAsFile().name);
+                    }
+                }
+                refreshFileLists();
+            }
+        };
+        // 刷新文件列表
+        function refreshFileLists() {
+            var html = "";
+            for (var i = 0; i < waitingFiles.length; i++) {
+                html += "<li>" + waitingFiles[i] + "<div class='list-item-progress'></div></li>";
+            }
+            waitingList.innerHTML = html;
+            if (waitingFiles.length == 0) {
+                waitingList.innerHTML = "<li>没有项目</li>";
+            }
+            waitingSubtitle.innerHTML = "等待中（" + waitingFiles.length + "）";
+            html = "";
+            for (var i = 0; i < completedFiles.length; i++) {
+                html += "<li>" + completedFiles[i] + "</li>";
+            }
+            completedList.innerHTML = html;
+            if (completedFiles.length == 0) {
+                completedList.innerHTML = "<li>没有项目</li>";
+            }
+            completedSubtitle.innerHTML = "已完成（" + completedFiles.length + "）";
+            handleTouch(); // 更新触摸屏优化
+        }
+        // 清除
+        function clearFiles() {
+            selectedFiles = [];
+            waitingFiles = [];
+            completedFiles = [];
+            refreshFileLists();
+            keyInput.value = "";
+        }
+        // 加密
+        var taskCount = 0;
+        function beginEncryption() {
+            if (taskCount != 0) return; // 正在处理任务时忽略其他请求
+            // 没有文件时提示选择
+            if (waitingFiles.length == 0) {
+                selectFiles();
+                return;
+            }
+            // 密钥为空时提示输入
+            if (keyInput.value.length == 0) {
+                keyInput.focus();
+                return;
+            }
+            // 禁用部分控件
+            dropArea.classList.add("disabled");
+            keyInput.classList.add("disabled");
+            clearBtn.classList.add("disabled");
+            encryptBtn.classList.add("disabled");
+            keyInput.blur(); // 密钥输入框失焦
+            // 开始加密
+            taskCount = selectedFiles.length; // 处理任务计数
+            selectedFiles.forEach(function (file) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    // 发送加密任务
+                    worker.postMessage({
+                        type: "encrypt",
+                        data: e.target.result,
+                        key: keyInput.value,
+                        name: file.name
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            });
+            selectedFiles = [];
+        }
+        keyInput.onkeydown = function (e) {
+            if (e.keyCode == 13) {
+                beginEncryption();
+            }
+        };
+        // 触摸屏优化
+        function handleTouch() {
+            ['drop-area', 'btn', 'file-list li', 'input'].forEach(function (selector) {
+                if (selector == 'file-list li') {
+                    var className = 'file-list-li-active';
+                } else {
+                    var className = selector + '-active';
+                }
+                document.querySelectorAll('.' + selector).forEach(function (element) {
+                    element.addEventListener('touchstart', function (e) {
+                        element.classList.add(className);
+                    });
+                    element.addEventListener('touchend', function (e) {
+                        setTimeout(() => {
+                            element.classList.remove(className);
+                        }, 100);
+                    });
+                });
+            });
+        }
+        onload = function () {
+            handleTouch();
+        };
+        // 滚动优化（触边回弹）
+        var card = document.querySelector('.card');
+        var cardContent = document.querySelector('.card-content');
+        var touchScroll_lastY, touchScroll_lastScrollTop;
+        var touchScroll_bounce = false; // 此变量记录引起回弹的事件，true 为手指滑动，false 为惯性滚动
+        var touchScroll_bouncing = false; // 此变量记录回弹动画是否正在进行
+        card.ontouchstart = function (e) {
+            touchScroll_lastY = e.touches[0].clientY;
+            touchScroll_bounce = true;
+        };
+        card.ontouchmove = function (e) {
+            var touchScroll_y = e.touches[0].clientY;
+            if ((card.scrollTop == 0 && touchScroll_y > touchScroll_lastY) || (Math.abs(card.scrollTop - (card.scrollHeight - card.clientHeight)) <= 1 && touchScroll_y < touchScroll_lastY)) { // 触顶或触底
+                // 第一种情况，跟随手指滑动
+                if (!touchScroll_bounce) return; // 忽略惯性滚动
+                cardContent.style.transitionDuration = "0s";
+                setTimeout(function () {
+                    cardContent.style.transform = "translateY(" + (card.scrollTop == 0 ? '' : '-') + Math.log(Math.abs(touchScroll_y - touchScroll_lastY) / 50 + 1) * 50 + "px)";
+                }, 0);
+            } else {
+                // 正常滚动
+                touchScroll_lastY = touchScroll_y;
+                touchScroll_bounce = false;
+            }
+        };
+        card.ontouchend = function (e) {
+            if (touchScroll_bouncing) return; // 避免过早回弹
+            // 回弹
+            cardContent.style.transitionDuration = "0.5s";
+            setTimeout(function () {
+                cardContent.style.transform = "translateY(0px)";
+            }, 0);
+            touchScroll_bounce = false;
+        };
+        // 第二种情况，跟随惯性滚动
+        card.onscroll = function (e) {
+            if (touchScroll_bounce) return; // 忽略手指滑动
+            var touchScroll_scrollTop = card.scrollTop;
+            if (card.scrollTop == 0 || Math.abs(card.scrollTop - (card.scrollHeight - card.clientHeight)) <= 1) {
+                var transform = Math.log(Math.abs(touchScroll_lastScrollTop - touchScroll_scrollTop) + 100) * 10; // 计算惯性滚动距离
+                // 开始拉伸
+                cardContent.style.transitionDuration = "0.25s";
+                setTimeout(function () {
+                    cardContent.style.transform = "translateY(" + (card.scrollTop == 0 ? '' : '-') + + transform + "px)";
+                    touchScroll_bouncing = true;
+                    // 开始回弹
+                    setTimeout(function () {
+                        cardContent.style.transitionDuration = "0.4s";
+                        setTimeout(function () {
+                            cardContent.style.transform = "translateY(0px)";
+                            touchScroll_bouncing = false;
+                        }, 0);
+                    }, 250);
+                }, 0);
+            }
+            touchScroll_lastScrollTop = touchScroll_scrollTop;
+        };
+    </script>
+</body>
+
+</html>

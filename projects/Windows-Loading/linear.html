@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Windows 8 ~ 10 加载效果（线性）</title>
+    <style>
+        html {
+            background: #0178D4;
+        }
+
+        .progressbar {
+            position: fixed;
+            width: 500px;
+            height: 10px;
+            left: calc(50% - 250px);
+            top: calc(50% - 5px);
+        }
+
+        .progressbar-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            left: 0;
+            top: 0;
+            background: #fff;
+            border-radius: 10px;
+            animation-name: slide;
+            animation-duration: 2.5s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            visibility: hidden;
+        }
+
+        @keyframes slide {
+            0% {
+                visibility: visible;
+            }
+
+            12% {
+                visibility: visible;
+                transform: translateX(166.67px);
+            }
+
+            48% {
+                visibility: visible;
+                transform: translateX(333.33px);
+            }
+
+            60% {
+                visibility: hidden;
+                transform: translateX(500px);
+            }
+
+            100% {
+                visibility: hidden;
+                transform: translateX(500px);
+            }
+        }
+
+        .text {
+            position: fixed;
+            width: 100%;
+            text-align: center;
+            left: 0;
+            top: calc(50% + 70px);
+            font-size: 26px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="progressbar"></div>
+    <div class="text">请稍等...</div>
+    <script>
+        window.onload = function () {
+            document.querySelectorAll(".progressbar").forEach(function (item) {
+                for (var i = 0; i < 5; i++) {
+                    item.innerHTML += `<div class="progressbar-dot" style="animation-delay: ` + 0.12 * i + `s;"></div>`;
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

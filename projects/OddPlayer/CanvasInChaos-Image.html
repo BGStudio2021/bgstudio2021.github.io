@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CanvasInChaos</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #333;
+            color: #fff;
+        }
+
+        button {
+            border: none;
+            outline: 2px solid transparent;
+            padding: 12px 32px;
+            border-radius: 1024px;
+            background: #fff;
+            color: #333;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #ccc;
+            transition: 0.2s;
+        }
+
+        button:active {
+            background: #666;
+            color: #fff;
+            outline: 2px solid #fff;
+            transition: 0s;
+        }
+
+        input:not([type="range"]) {
+            padding: 8px;
+            background: #ccc;
+            border: none;
+            outline: 2px solid transparent;
+            transition: 0.2s;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <h1 style="margin: 32px 0 16px 0;">CanvasInChaos</h1>
+        <div style="margin-bottom: 16px;">
+            <button onclick="selectFile();" style="margin: 8px 16px;">选择文件</button>
+        </div>
+        <canvas id="canvas" style="background: #000;max-width: 50%;max-height: 50%;"></canvas>
+        <p style="text-align: center;margin: 32px 0;">Made by Burger Studio.</p>
+    </div>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        function selectFile() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = function () {
+                const file = this.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = new Image();
+                    img.onload = function () {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        let pixels = imgData.data;
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            let r = pixels[i];
+                            let g = pixels[i + 1];
+                            let b = pixels[i + 2];
+                            let a = pixels[i + 3];
+                            /* 01 灰度
+                            let gray = (r + g + b) / 3;
+                            pixels[i] = gray;
+                            pixels[i + 1] = gray;
+                            pixels[i + 2] = gray;
+                            pixels[i + 3] = a;
+                            */
+                            /* 02 反相
+                            pixels[i] = 255 - r;
+                            pixels[i + 1] = 255 - g;
+                            pixels[i + 2] = 255 - b;
+                            pixels[i + 3] = a;
+                            */
+                            /* 03 随机偏移
+                            let offset = Math.floor(Math.random() * 64);
+                            pixels[i] = (r + offset) % 256;
+                            pixels[i + 1] = (g + offset) % 256;
+                            pixels[i + 2] = (b + offset) % 256;
+                            pixels[i + 3] = a;
+                            */
+                            /* 04 随机噪声
+                            let noise = Math.floor(Math.random() * 256);
+                            pixels[i] = (r + noise) % 256;
+                            pixels[i + 1] = (g + noise) % 256;
+                            pixels[i + 2] = (b + noise) % 256;
+                            pixels[i + 3] = a;
+                            */
+                            pixels[i] = (r + i) % 256;
+                            pixels[i + 1] = (g + i) % 256;
+                            pixels[i + 2] = (b + i) % 256;
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+    </script>
+</body>
+
+</html>

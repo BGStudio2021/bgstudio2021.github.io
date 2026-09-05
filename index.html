@@ -111,11 +111,11 @@
                         style="width: var(--size-auto);height: var(--size-auto);margin-bottom: 0 !important;">
                 </div>
                 <div style="margin-top: var(--margin-2-auto);">我是 Burger Studio（BGStudio），一位 Web 前端爱好者，自 2021
-                    年初开始做一些小作品。<br>这个站点收集了我的主要作品，留作纪念。<br>整理于 2024 年 8 月 14 日。
+                    年初开始做一些小作品。<br>这个站点收集了我的主要作品，留作纪念。<br>第 1 次整理于 2024 年 8 月 14 日。<br>第 2 次整理于 2026 年 9 月 4 日。
                 </div>
                 <br>
                 <mdui-button full-width icon="download"
-                    onclick="openPage('https://www.123pan.com/s/eSpzVv-TrBU3');">下载我的作品</mdui-button>
+                    onclick="openPage('https://4000332686.share.123pan.cn/123pan/6pjUMh-WPPs');">下载我的作品</mdui-button>
                 <br>
                 <mdui-card style="width: 100%;">
                     <mdui-list id="project_list">
@@ -205,10 +205,7 @@
             if (isNewTab) {
                 window.open(URL);
             } else {
-                document.querySelector("#body_content").style.opacity = 0;
-                window.setTimeout(function () {
-                    location.href = URL;
-                }, 300);
+                location.href = URL;
             }
         }
         // 切换主题

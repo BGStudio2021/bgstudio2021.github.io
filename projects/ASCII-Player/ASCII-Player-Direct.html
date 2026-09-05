@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>字符画播放器</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #333;
+            color: #fff;
+        }
+
+        button {
+            border: none;
+            outline: 2px solid transparent;
+            padding: 12px 32px;
+            border-radius: 1024px;
+            background: #fff;
+            color: #333;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #ccc;
+            transition: 0.2s;
+        }
+
+        button:active {
+            background: #666;
+            color: #fff;
+            outline: 2px solid #fff;
+            transition: 0s;
+        }
+
+        #drag_overlay {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: #333;
+            font-size: 24px;
+            transition: 0.2s;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .drag-overlay-content {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            width: calc(100% - 32px);
+            height: calc(100% - 32px);
+            display: grid;
+            align-content: center;
+            justify-content: center;
+            border: 2px dashed #fff;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="text-align: center;">
+        <h1 style="margin: 32px 0 16px 0;">字符画播放器</h1>
+        <div style="margin-bottom: 16px;">
+            <button onclick="selectVideo();" style="margin: 16px;">选择视频</button>
+            <button onclick="selectImage();" style="margin: 16px;">选择图片</button>
+            <button onclick="useCamera();" style="margin: 16px;" id="btn_useCamera">调用相机</button>
+            <button onclick="switchCamera();" style="margin: 16px;">切换相机</button>
+            <button onclick="copyScreen();" style="margin: 16px;">复制字符画</button>
+            <button onclick="switchFullscreen();" style="margin: 16px;">切换全屏</button>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label for="range_fontSize" style="display: inline;vertical-align: middle;">字体大小</label>
+            <input type="range" min="1" max="20" value="17" id="range_fontSize" oninput="adjustFontSize();"
+                style="display: inline;vertical-align: middle;" />
+        </div>
+        <div style="margin-bottom: 32px;">
+            <label for="range_fontSize" style="display: inline;vertical-align: middle;">压缩程度</label>
+            <input type="range" min="4" max="100" value="16" step="1" id="range_compression"
+                oninput="adjustCompression();" style="display: inline;vertical-align: middle;" />
+        </div>
+        <br>
+        <div style="text-align: center;display: none;" id="video_wrapper">
+            <video id="video" style="width: 20%;" controls></video>
+        </div>
+        <div style="text-align: center;display: none;" id="img_wrapper">
+            <img id="img" style="width: 20%;">
+        </div>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <div style="margin: 32px 0;line-height: 17px;font-size: 17px;background: #000;" id="ASCIIScreen"></div>
+        <p style="text-align: center;margin: 32px 0;">Made by Burger Studio.</p>
+    </div>
+    <div id="drag_overlay">
+        <div class="drag-overlay-content">释放鼠标导入文件</div>
+    </div>
+    <script>
+        // 变量区
+        var video = document.getElementById("video");
+        var img = document.getElementById("img");
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var ASCIIScreen = document.getElementById("ASCIIScreen");
+        var compression = 16;
+        var refColorList = [[232, 66, 86], [252, 134, 74], [239, 191, 76], [92, 222, 149], [72, 134, 214], [132, 102, 192], [136, 88, 86], [0, 0, 0], [255, 255, 255]];
+        var charList = ["🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "🟤", "⚫", "⚪"];
+        // var charList = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪", "🟫", "⬛", "⬜"];
+        var imgMode = false;
+        var cameraOn = false;
+        var camera_facing = "environment";
+        // 定时刷新字符画屏幕
+        window.onload = function () {
+            var interval = setInterval(function () {
+                if (!imgMode && (video.paused || video.ended)) return;
+                refreshScreen();
+            }, 1000 / 30);
+        }
+        function refreshScreen() {
+            if (imgMode) {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var data = imageData.data;
+            var width = canvas.width;
+            var height = canvas.height;
+            var resultStr = '';
+            for (var i = 0; i < height; i += compression) {
+                for (var j = 0; j < width; j += compression) {
+                    var r = data[(i * width + j) * 4];
+                    var g = data[(i * width + j) * 4 + 1];
+                    var b = data[(i * width + j) * 4 + 2];
+                    var a = data[(i * width + j) * 4 + 3];
+                    var diff = -1;
+                    var char = '';
+                    for (let i = 0; i < refColorList.length; i++) {
+                        var _diff = (r - refColorList[i][0]) ** 2 + (g - refColorList[i][1]) ** 2 + (b - refColorList[i][2]) ** 2;
+                        if (_diff < diff || diff == -1) {
+                            diff = _diff;
+                            char = charList[i];
+                        }
+                    }
+                    resultStr += char;
+                }
+                resultStr += '<br>';
+            }
+            ASCIIScreen.innerHTML = resultStr;
+            ctx.putImageData(imageData, 0, 0);
+        }
+        // 选择视频 / 图片
+        function selectVideo() {
+            if (cameraOn) {
+                stopCamera();
+            }
+            var input = document.createElement("input");
+            input.type = "file";
+            input.accept = "video/*";
+            input.onchange = function () {
+                var file = this.files[0];
+                var url = URL.createObjectURL(file);
+                video.src = url;
+            };
+            input.click();
+        }
+        function selectImage() {
+            if (cameraOn) {
+                stopCamera();
+            }
+            var input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = function () {
+                var file = this.files[0];
+                var url = URL.createObjectURL(file);
+                img.src = url;
+            };
+            input.click();
+        }
+        // 调用相机
+        function useCamera() {
+            if (cameraOn) {
+                stopCamera();
+            } else {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: {
+                                exact: camera_facing
+                            }
+                        },
+                        audio: false
+                    }).then(function (stream) {
+                        video.srcObject = stream;
+                        setImgMode(false);
+                        video.play();
+                        cameraOn = true;
+                        document.getElementById("btn_useCamera").innerText = "关闭相机";
+                    }).catch(function (err) {
+                        console.log(err.name + ": " + err.message);
+                    });
+                } else {
+                    alert("无法调用相机。");
+                }
+            }
+        }
+        // 停止调用相机
+        function stopCamera() {
+            video.pause();
+            video.srcObject.getTracks()[0].stop();
+            video.srcObject = null;
+            cameraOn = false;
+            document.getElementById("btn_useCamera").innerText = "调用相机";
+        }
+        // 切换相机
+        function switchCamera() {
+            if (cameraOn) {
+                stopCamera();
+            }
+            camera_facing = camera_facing == 'environment' ? 'user' : 'environment';
+            useCamera();
+        }
+        // 自动切换显示模式
+        video.onloadedmetadata = function () {
+            setImgMode(false);
+            video.play();
+        };
+        img.onload = function () {
+            setImgMode(true);
+        };
+        function setImgMode(isImgMode) {
+            imgMode = isImgMode;
+            if (isImgMode) {
+                document.getElementById("video_wrapper").style.display = "none";
+                document.getElementById("img_wrapper").style.display = "block";
+                canvas.width = img.width * 2;
+                canvas.height = img.height * 2;
+                document.getElementById("range_compression").min = "1";
+            } else {
+                document.getElementById("video_wrapper").style.display = "block";
+                document.getElementById("img_wrapper").style.display = "none";
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                document.getElementById("range_compression").min = "4";
+                if (compression < 4) {
+                    compression = 4;
+                }
+            }
+        }
+        // 调整字体大小 / 压缩程度
+        function adjustFontSize() {
+            var fontSize = document.getElementById('range_fontSize').value;
+            ASCIIScreen.style.fontSize = fontSize + 'px';
+            ASCIIScreen.style.lineHeight = fontSize + 'px';
+        }
+        function adjustCompression() {
+            compression = parseInt(document.getElementById('range_compression').value);
+            refreshScreen();
+        }
+        // 复制字符画
+        function copyScreen() {
+            var content = ASCIIScreen.innerHTML.replaceAll('<br>', '\n');
+            let copy = (e) => {
+                e.preventDefault();
+                e.clipboardData.setData('text/plain', content);
+                document.removeEventListener('copy', copy);
+            }
+            document.addEventListener('copy', copy);
+            document.execCommand("Copy");
+        }
+        // 切换全屏
+        function switchFullscreen() {
+            if (ASCIIScreen.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                ASCIIScreen.requestFullscreen();
+            }
+        }
+        // 导入文件：拖放
+        document.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById("drag_overlay").style.opacity = 1;
+        }, false);
+        document.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById("drag_overlay").style.opacity = 0;
+            var files = e.dataTransfer.files;
+            if (files.length > 0) {
+                var file = files[0];
+                handleDragCopy(file);
+            }
+        }, false);
+        document.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById("drag_overlay").style.opacity = 0;
+        });
+        // 导入文件：粘贴
+        document.addEventListener('paste', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var item = e.clipboardData.items[0];
+            handleDragCopy(item.getAsFile());
+        });
+        // 处理导入的文件
+        function handleDragCopy(file) {
+            if (cameraOn) {
+                stopCamera();
+            }
+            var type = file.type;
+            var url = URL.createObjectURL(file);
+            if (type.indexOf('video') >= 0) {
+                video.src = url;
+                setImgMode(false);
+                video.play();
+            } else if (type.indexOf('image') >= 0) {
+                img.src = url;
+                setImgMode(true);
+            }
+        }
+    </script>
+</body>
+
+</html>

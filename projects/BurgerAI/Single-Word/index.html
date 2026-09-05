@@ -1,0 +1,342 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <title>生草语言模型</title>
+    <style>
+        html {
+            background: #333;
+            color: #fff;
+        }
+
+        body {
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .container {
+            width: 90%;
+            margin-left: 5%;
+        }
+
+        @media (min-width:640px) {
+            .container {
+                width: 70%;
+                margin-left: 15%;
+            }
+        }
+
+        button {
+            padding: 8px 32px;
+            margin: 4px;
+            border: none;
+            outline: none;
+            transition-property: background, color, border-radius;
+            transition-duration: 0.15s, 0.15s, 0.2s;
+            border-radius: 20px;
+            background: #fff;
+            color: #000;
+        }
+
+        button:hover {
+            background: #ccc;
+        }
+
+        button:active,
+        .button-active {
+            background: #1E88E5 !important;
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        textarea,
+        .input {
+            margin: 8px 0;
+            border: none;
+            outline: none;
+            border-radius: 4px;
+            background: #ccc;
+            color: #000;
+            padding: 8px;
+            transition: 0.2s;
+        }
+
+        textarea {
+            width: 90%;
+            height: 192px;
+        }
+
+        textarea:hover,
+        .input:hover {
+            background: #fff;
+        }
+
+        textarea:focus,
+        .input:focus {
+            background: #fff;
+            outline: 4px solid #1E88E5;
+        }
+
+        input[type=radio] {
+            display: none;
+        }
+
+        input+label {
+            padding: 8px 20px;
+            transition: 0.15s;
+            background: #fff;
+            color: #000;
+            font-size: 13px;
+        }
+
+        input+label:hover {
+            background: #ccc;
+        }
+
+        input:checked+label {
+            background: #1E88E5;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="text-align: center;">
+        <h1 style="margin-bottom: 0;">生草语言模型</h1>
+        <p style="margin-top: 4px;">中文模型</p>
+        <hr />
+        <div style="margin: 24px 0;">
+            <input type="radio" name="tabs" id="tab1" checked>
+            <label for="tab1" style="border-radius: 64px 0 0 64px;">训练</label>
+            <input type="radio" name="tabs" id="tab2">
+            <label for="tab2">生成</label>
+            <input type="radio" name="tabs" id="tab3">
+            <label for="tab3" style="border-radius: 0 64px 64px 0;">选项</label>
+        </div>
+        <div id="trainer" style="transition: 0.2s;">
+            <h2>训练</h2>
+            <textarea id="input1" placeholder="输入训练文本。"></textarea><br>
+            <button onclick="javascript:train();">训练</button>
+            <div id="database" style="margin-top: 8px;"></div>
+        </div>
+        <div id="generator" style="transition: 0.2s;display: none;opacity: 0;">
+            <h2>生成</h2>
+            <div style="margin-bottom: 4px;">训练后方可生成内容。</div>
+            <textarea id="input2" placeholder="输入自定义开头，留空则随机生成。"></textarea><br>
+            <div>生成句数：<input type="number" id="input4" class="input" placeholder="留空或小于等于 0 则无限制。"></div>
+            <button onclick="javascript:generate();" style="margin-top: 8px;">生成</button>
+            <button onclick="javascript:interrupt();">停止生成</button>
+            <div id="output" style="text-align: left;margin-top: 8px;"></div>
+        </div>
+        <div id="options" style="transition: 0.2s;display: none;opacity: 0;">
+            <h2>选项</h2>
+            <button onclick="javascript:switchModule();" style="margin-bottom: 8px;">切换至英语模型</button><br>
+            <button onclick="javascript:backup();">导出数据到剪贴板</button><br>
+            <textarea id="input3" placeholder="输入要恢复的数据。"></textarea><br>
+            <button onclick="javascript:restore();">恢复数据</button>
+        </div>
+        <div style="margin-top: 16px;">Made by Burger Studio.</div>
+    </div>
+    <script>
+        //自动跳转至英文模型
+        if (localStorage.enModule) {
+            location.href = "index-en.html";
+        }
+        //页面加载完成时执行
+        window.onload = function() {
+            //获取数据库
+            if (localStorage.getItem("database1")) {
+                database1 = JSON.parse(localStorage.getItem("database1"));
+                database2 = JSON.parse(localStorage.getItem("database2"));
+            } else {
+                database1 = [];
+                database2 = [];
+            }
+            //设置变量
+            result = document.getElementById("output");
+            onExpansion = 0;
+            window.setInterval(function() {
+                //重复执行续写函数
+                expand();
+            }, 50);
+            //计算并显示数据库大小
+            document.getElementById("database").innerText = "当前数据库大小：" + calcDatabase();
+            //显示页面主体
+            document.body.style.opacity = 1;
+            //按钮触摸优化（降低延迟）
+            document.querySelectorAll("button").forEach(function(item, index) {
+                item.ontouchstart = function() {
+                    item.classList.add("button-active");
+                }
+                item.ontouchend = function() {
+                    window.setTimeout(function() {
+                        item.classList.remove("button-active");
+                    }, 200);
+                }
+            });
+            //选项卡绑定点击事件
+            document.getElementById("tab1").onclick = function() {
+                document.getElementById("generator").style.opacity = 0;
+                document.getElementById("options").style.opacity = 0;
+                window.setTimeout(function() {
+                    document.getElementById("generator").style.display = "none";
+                    document.getElementById("options").style.display = "none";
+                    document.getElementById("trainer").style.display = "block";
+                    window.setTimeout(function() {
+                        document.getElementById("trainer").style.opacity = 1;
+                    }, 50);
+                }, 200);
+            };
+            document.getElementById("tab2").onclick = function() {
+                document.getElementById("trainer").style.opacity = 0;
+                document.getElementById("options").style.opacity = 0;
+                window.setTimeout(function() {
+                    document.getElementById("trainer").style.display = "none";
+                    document.getElementById("options").style.display = "none";
+                    document.getElementById("generator").style.display = "block";
+                    window.setTimeout(function() {
+                        document.getElementById("generator").style.opacity = 1;
+                    }, 50);
+                }, 200);
+            };
+            document.getElementById("tab3").onclick = function() {
+                document.getElementById("trainer").style.opacity = 0;
+                document.getElementById("generator").style.opacity = 0;
+                window.setTimeout(function() {
+                    document.getElementById("trainer").style.display = "none";
+                    document.getElementById("generator").style.display = "none";
+                    document.getElementById("options").style.display = "block";
+                    window.setTimeout(function() {
+                        document.getElementById("options").style.opacity = 1;
+                    }, 50);
+                }, 200);
+            };
+        }
+        //训练
+        function train() {
+            var inputOriginal = document.getElementById("input1").value;
+            var input = inputOriginal.replace(/\n/g, "");
+            if (input == "") {
+                alert("未输入训练文本。");
+            } else {
+                var oldDatabase = calcDatabase();
+                for (var i = 0; i < input.length - 1; i++) {
+                    if (database1.indexOf(input[i]) != -1) {
+                        database2[database1.indexOf(input[i])].push(input[i + 1]);
+                    } else {
+                        database1.push(input[i]);
+                        database2.push([input[i + 1]]);
+                    }
+                }
+                localStorage.setItem("database1", JSON.stringify(database1));
+                localStorage.setItem("database2", JSON.stringify(database2));
+                alert("训练完成，数据库大小增加 " + (calcDatabase() - oldDatabase));
+                document.getElementById("database").innerText = "当前数据库大小：" + calcDatabase();
+            }
+        }
+        //生成
+        function generate() {
+            var input = document.getElementById("input2").value;
+            result.innerText = "";
+            if (input != "") {
+                result.innerText = input;
+            } else {
+                //若没有输入内容，则随机生成
+                var r = parseInt(Math.random() * database1.length);
+                result.innerText += database1[r];
+            }
+            limit = document.getElementById("input4").value;
+            inputText = input;
+            onExpansion = 1;
+        }
+
+        function expand() {
+            if (onExpansion == 1) {
+                var lastWord = result.innerText[result.innerText.length - 1];
+                if (database1.indexOf(lastWord) != -1) {
+                    onExpansion = 1;
+                    var r = parseInt(Math.random() * database2[database1.indexOf(lastWord)].length);
+                    result.innerText += database2[database1.indexOf(lastWord)][r];
+                } else {
+                    onExpansion = 0;
+                }
+                if (limit > 0) {
+                    var outputText = result.innerText;
+                    if (strCount(outputText, "。") + strCount(outputText, "？") + strCount(outputText, "！") - strCount(inputText, "。") - strCount(inputText, "？") - strCount(inputText, "！") >= limit) {
+                        onExpansion = 0;
+                    }
+                }
+            }
+        }
+        //停止生成
+        function interrupt() {
+            onExpansion = 0;
+        }
+        //计算词汇量
+        function calcDatabase() {
+            var databaseSize = 0;
+            for (var i = 0; i < database2.length; i++) {
+                for (var j = 0; j < database2[i].length; j++) {
+                    databaseSize++;
+                }
+            }
+            return databaseSize;
+        }
+        //复制文本
+        function copyHandle(content) {
+            let copy = (e) => {
+                e.preventDefault()
+                e.clipboardData.setData('text/plain', content)
+                document.removeEventListener('copy', copy)
+            }
+            document.addEventListener('copy', copy)
+            document.execCommand("Copy");
+            alert("已复制到剪贴板。");
+        }
+        document.getElementById("output").onclick = function() {
+            copyHandle(this.innerText);
+        }
+        //备份数据
+        function backup() {
+            var dbBackup = [database1, database2];
+            copyHandle(JSON.stringify(dbBackup));
+        }
+        //恢复数据
+        function restore() {
+            try {
+                var input = JSON.parse(document.getElementById("input3").value);
+                database1 = input[0];
+                database2 = input[1];
+                localStorage.setItem("database1", JSON.stringify(database1));
+                localStorage.setItem("database2", JSON.stringify(database2));
+                alert("已恢复数据。");
+                document.getElementById("database").innerText = "当前数据库大小：" + calcDatabase();
+            } catch (error) {
+                alert(error);
+            }
+        }
+        //查找字符串出现次数
+        function strCount(str, target) {
+            var index = str.indexOf(target);
+            var sum = 0;
+            while (index > -1) {
+                index = str.indexOf(target, index + 1);
+                sum++;
+            }
+            return sum;
+        }
+        //切换模型
+        function switchModule() {
+            document.body.style.opacity = 0;
+            localStorage.setItem("enModule", true);
+            window.setTimeout(function() {
+                location.href = "index-en.html";
+            }, 300);
+        }
+    </script>
+</body>
+
+</html>
