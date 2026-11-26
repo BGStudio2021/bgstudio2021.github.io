@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+    <title>汉诺塔问题可视化演示</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #333;
+            color: #Fff;
+        }
+
+        body {
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 64px 0 48px 0;
+        }
+
+        .container {
+            position: relative;
+            margin: 48px 0;
+            width: fit-content;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .area {
+            position: relative;
+            width: 200px;
+            height: 400px;
+        }
+
+        .base {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 32px;
+            background: #ccc;
+            color: #000;
+        }
+
+        .post {
+            position: absolute;
+            width: 8px;
+            height: calc(100% - 32px);
+            left: calc(50% - 4px);
+            background: #ccc;
+        }
+
+        .plate {
+            position: absolute;
+            height: 32px;
+            z-index: 1;
+            transition: 0.3s;
+        }
+
+        .input {
+            padding: 6px 8px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .input:hover {
+            outline: 1.5px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .input:focus {
+            outline: 1.5px solid rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            min-width: 128px;
+            border: none;
+            outline: none;
+            margin: 8px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: background 0.3s,
+                color 0.3s;
+        }
+
+        .btn:hover {
+            outline: 1.5px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .btn:active {
+            background: rgba(255, 255, 255, 0.8);
+            color: #000;
+            outline: 1.5px solid rgba(255, 255, 255, 0.8);
+            transition: 0s;
+        }
+
+        .btn[disabled] {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        @media (max-width:768px) {
+            .title {
+                margin: 32px 0;
+            }
+
+            .container {
+                transform: translateX(-50%) scale(0.5) translateY(-64px);
+                margin: 32px 0;
+            }
+
+            .contents-after-container {
+                transform: translateY(-64px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">汉诺塔问题可视化演示</div>
+    <div class="container">
+        <div class="area">
+            <div class="base">A</div>
+            <div class="post"></div>
+        </div>
+        <div class="area">
+            <div class="base">B</div>
+            <div class="post"></div>
+        </div>
+        <div class="area">
+            <div class="base">C</div>
+            <div class="post"></div>
+        </div>
+    </div>
+    <div style="text-align: center;" class="contents-after-container">
+        <div style="display: inline-block;vertical-align: middle;">盘子个数：</div><input type="number" id="input_plateNum"
+            class="input" style="display: inline-block;vertical-align: middle;" value="3">
+        <br>
+        <div style="margin-top: 16px;">
+            <button class="btn" onclick="reset();">复位</button>
+            <button class="btn btn-start" onclick="btnClick();">开始</button>
+        </div>
+        <div style="text-align: center;margin-top: 16px;" class="log"></div>
+        <div style="text-align: center;margin: 16px 0;">Made by Burger Studio.</div>
+    </div>
+    <script>
+        // 初始化
+        const colors = ['F44336', 'E91E63', '9C27B0', '673AB7', '3F51B5', '2196F3', '03A9F4', '00BCD4', '009688', '4CAF50', '8BC34A', 'CDDC39', 'FFEB3B', 'FFC107', 'FF9800', 'FF5722', '795548', '9E9E9E', '607D8B'];
+        const container = document.querySelector('.container');
+        let plates = [[], [], []];
+        let resolution = [];
+        let plateNum;
+        let demonstrating = false;
+        function init(n) {
+            printLog('正在准备盘子元素......');
+            createPlate(0, n);
+        }
+        // 创建盘子元素
+        function createPlate(i, n) {
+            if (!demonstrating) return;
+            let plate = document.createElement('div');
+            plate.classList.add('plate');
+            plate.style.background = '#' + colors[i];
+            plate.style.width = (200 - (i + 1) * 15) + 'px';
+            plate.width = (200 - (i + 1) * 15);
+            plate.style.left = (i + 1) * 7.5 + 'px';
+            plate.style.bottom = 32 * (i + 1) + 'px';
+            plate.style.transform = 'translateY(-100px)';
+            plate.style.opacity = 0;
+            plate.style.transition = `0.15s ${i * 0.05}s`;
+            plates[0].push(plate);
+            container.appendChild(plate);
+            setTimeout(() => {
+                if (!demonstrating) return;
+                plate.style.transform = 'translateY(0)';
+                plate.style.opacity = 1;
+                setTimeout(() => {
+                    plate.style.transition = '0.3s 0s';
+                }, 150);
+                if (i < n - 1) {
+                    createPlate(i + 1, n);
+                } else {
+                    setTimeout(() => {
+                        hanoi(n, 0, 1, 2);
+                    }, 1000);
+                }
+            }, 150);
+        }
+        // 移动盘子
+        // 把 source 座最上面的一个盘子移动到 target 座最上面
+        function move(src, tgt) {
+            let plate = plates[src][plates[src].length - 1];
+            plate.style.bottom = '400px';
+            setTimeout(() => {
+                plate.style.left = 232 * tgt + (200 - plate.width) / 2 + 'px';
+                setTimeout(() => {
+                    plate.style.bottom = (plates[tgt].length + 1) * 32 + 'px';
+                    plates[src].splice(plates[src].length - 1, 1);
+                    plates[tgt].push(plate);
+                }, 300);
+            }, 300);
+        }
+        // 递归计算
+        function hanoi(n, a, b, c) {
+            if (n == 1) {
+                resolution.push([a, c]); // 先计算好步骤放到数组中，之后再按步骤执行
+                if (resolution.length == 2 ** plateNum - 1) {
+                    demonstrate();
+                }
+            } else {
+                hanoi(n - 1, a, c, b);
+                resolution.push([a, c]);
+                hanoi(n - 1, b, a, c);
+            }
+        }
+        // 按步骤演示
+        function demonstrate(step = 0) {
+            if (!demonstrating) return;
+            move(...resolution[step]);
+            // console.log(`move(${resolution[step].join(', ')})`);
+            printLog(`正在演示......（${step + 1} / ${resolution.length}）`);
+            if (step + 1 < resolution.length) {
+                setTimeout(() => {
+                    demonstrate(step + 1);
+                }, 900);
+            } else {
+                printLog(`正在演示......（${step + 1} / ${resolution.length}）`);
+                setTimeout(() => {
+                    printLog('演示完毕，复位后可重新演示。');
+                }, 900);
+            }
+        }
+        // 按钮 click 事件绑定
+        function btnClick() {
+            let n = document.querySelector('#input_plateNum').value;
+            if (!(n > 0 && n <= 12)) {
+                printLog('输入的数值错误或超限（1~12）。');
+                return;
+            }
+            demonstrating = true;
+            document.querySelector('.btn-start').disabled = 'disabled';
+            plateNum = n;
+            init(n);
+        }
+        // 复位
+        function reset() {
+            demonstrating = false;
+            document.querySelector('.btn-start').disabled = '';
+            plates = [[], [], []];
+            document.querySelectorAll('.plate').forEach((plate) => {
+                container.removeChild(plate);
+            });
+            resolution = [];
+            document.querySelector('#input_plateNum').value = '3';
+            printLog('已复位。');
+        }
+        // 打印日志
+        function printLog(msg) {
+            document.querySelector('.log').textContent = msg;
+        }
+        // 监听输入框回车
+        document.querySelector('#input_plateNum').addEventListener('keydown', (key) => {
+            if (key.keyCode == 13 && !demonstrating) {
+                btnClick();
+            }
+        });
+    </script>
+</body>
+
+</html>
